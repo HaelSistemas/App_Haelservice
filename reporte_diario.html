@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Reporte Diario de Actividades</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CONFIGURACIÓN DE TU PALETA CORPORATIVA -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              corpBlue: {
+                50: '#ebf0f5',
+                100: '#d1dee8',
+                300: '#7aa3c2',
+                500: '#336a94',
+                600: '#233D5C', /* TU AZUL PRINCIPAL */
+                700: '#1c314a', /* Azul oscuro para efectos Hover */
+                800: '#142538',
+              },
+              corpGreen: {
+                DEFAULT: '#85B648', /* TU VERDE PRINCIPAL */
+                hover: '#719e3a'    /* Verde oscuro para efectos Hover */
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <style>
+        .tab-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Oculta las flechas nativas del input number */
+        input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+        /* Fuerza estilo calendario si es necesario */
+        input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans overflow-x-hidden min-h-screen flex flex-col">
+
+    <!-- BARRA SUPERIOR -->
+    <nav id="navbar-global" class="bg-corpBlue-600 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-40 shadow-md">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="hover:bg-corpBlue-500 p-1 rounded transition flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">menu</span>
+            </button>
+            <!-- SÍMBOLO DE LA APP EN LA BARRA SUPERIOR -->
+            <span class="text-lg font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">assignment</span> Reporte Diario
+            </span>
+        </div>
+        
+        <div class="relative flex items-center gap-3">
+            <a href="index.html" class="hidden md:flex items-center gap-2 bg-corpBlue-700 hover:bg-corpBlue-800 px-3 py-1.5 rounded-lg text-sm font-bold transition border border-corpBlue-500">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span> Portal
+            </a>
+            <button onclick="toggleUserMenu()" id="nav-user-initials" class="w-9 h-9 bg-corpBlue-50 text-corpBlue-600 rounded-full font-bold flex items-center justify-center hover:bg-white transition shadow-sm">
+                --
+            </button>
+            <div id="user-menu" class="hidden absolute right-0 top-12 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden z-50">
+                <div class="px-4 py-3 border-b border-slate-100">
+                    <p id="dropdown-user-name" class="text-sm font-bold text-slate-800">Cargando...</p>
+                </div>
+                <a href="https://wa.me/51922442738" target="_blank" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition">
+                    <span class="material-symbols-outlined text-[20px]">help</span> Soporte
+                </a>
+                <div class="border-t border-slate-100"></div>
+                <a href="index.html?logout=true" class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition font-medium">
+                    <span class="material-symbols-outlined text-[20px]">logout</span> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-slate-900/50 z-40 transition-opacity" onclick="toggleSidebar()"></div>
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-6 flex flex-col items-center justify-center border-b border-slate-100 bg-slate-50 h-32">
+            <!-- LOGO EN LA BARRA LATERAL -->
+            <img src="./Logo_Haelservice.png" alt="Logo Empresa" class="h-10 w-auto object-contain mb-3">
+            <h2 class="font-bold text-slate-800 text-lg">Reporte Diario</h2>
+            <h3 id="sidebar-project-name" class="text-xs font-bold text-slate-500 uppercase tracking-wide">Cargando Proyecto...</h3>
+        </div>
+        <div class="p-4 flex-grow overflow-y-auto mt-2">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Navegación</p>
+            <a href="index.html" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-corpBlue-600 bg-corpBlue-50 hover:bg-corpBlue-100 rounded-lg transition mb-2">
+                <span class="material-symbols-outlined">business_center</span> Mis Proyectos
+            </a>
+        </div>
+    </aside>
+
+    <!-- MODAL DE CONFIGURACIÓN -->
+    <div id="modal-config" class="hidden fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden">
+            <div class="bg-indigo-700 text-white px-5 py-4 flex justify-between items-center">
+                <h3 class="font-bold flex items-center gap-2"><span class="material-symbols-outlined">database</span> Añadir a Configuración</h3>
+                <button onclick="toggleModalConfig()" class="hover:bg-indigo-600 p-1 rounded-full"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2">¿Qué deseas añadir?</label>
+                    <select id="modalTipo" class="w-full p-2.5 border border-slate-300 rounded-lg bg-slate-50 outline-none focus:border-indigo-500" onchange="toggleModalFields()">
+                        <option value="rubro">Especialidad y Rubro</option>
+                        <option value="frente">Frente de Trabajo</option>
+                    </select>
+                </div>
+                <div id="modalFieldsRubro" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Especialidad (Ej: ELEC)</label>
+                        <input type="text" id="modalEspecialidad" class="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:border-indigo-500 uppercase" placeholder="Siglas o Nombre">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Nombre del Rubro (Ej: Cables)</label>
+                        <input type="text" id="modalRubro" class="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div id="modalFieldsFrente" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Nombre del Frente (Ej: Sótano 2)</label>
+                        <input type="text" id="modalFrente" class="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+            </div>
+            <div class="bg-slate-50 px-5 py-4 border-t border-slate-100 flex justify-end gap-3">
+                <button onclick="toggleModalConfig()" class="px-4 py-2 font-bold text-slate-600 bg-white border border-slate-300 rounded-lg hover:bg-slate-100">Cancelar</button>
+                <button id="btnGuardarConfig" onclick="guardarNuevaConfiguracion()" class="px-4 py-2 font-bold text-white bg-indigo-700 rounded-lg hover:bg-indigo-800 flex items-center gap-2">
+                    Guardar <span class="material-symbols-outlined text-sm">save</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <main class="flex-grow p-4 max-w-4xl mx-auto w-full mt-2">
+        <!-- TABS -->
+        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <button onclick="switchTab('ingresar')" id="btnTabIngresar" class="tab-btn active flex-1 bg-corpBlue-600 text-white border-corpBlue-600 border rounded-lg py-2.5 px-4 font-bold text-sm shadow-md transition whitespace-nowrap flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined text-lg">edit_document</span> Ingresar
+            </button>
+            <button onclick="switchTab('modificar')" id="btnTabModificar" class="tab-btn flex-1 bg-white text-slate-500 border border-slate-300 rounded-lg py-2.5 px-4 font-bold text-sm hover:bg-slate-50 transition whitespace-nowrap flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined text-lg">manage_search</span> Modificar
+            </button>
+            <button onclick="switchTab('previsualizar')" id="btnTabPrevisualizar" class="tab-btn flex-1 bg-white text-slate-500 border border-slate-300 rounded-lg py-2.5 px-4 font-bold text-sm hover:bg-slate-50 transition whitespace-nowrap flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined text-lg">picture_as_pdf</span> PDF
+            </button>
+            <button onclick="switchTab('enviar')" id="btnTabEnviar" class="tab-btn flex-1 bg-white text-slate-500 border border-slate-300 rounded-lg py-2.5 px-4 font-bold text-sm hover:bg-slate-50 transition whitespace-nowrap flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined text-lg">forward_to_inbox</span> Enviar
+            </button>
+        </div>
+
+        <!-- 1. PESTAÑA INGRESAR -->
+        <div id="tabIngresar" class="tab-content active bg-white p-6 rounded-xl shadow-md border border-slate-200">
+            <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                <span class="material-symbols-outlined text-corpBlue-600">post_add</span> Nuevo Registro
+            </h2>
+            <div class="mb-6 w-full md:w-1/2">
+                <label class="block text-sm font-semibold text-slate-600 mb-1">Fecha del Reporte</label>
+                <input type="date" id="dateField" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 outline-none focus:border-corpBlue-500">
+            </div>
+
+            <!-- ACTIVIDADES -->
+            <div class="mb-8">
+                <h4 class="text-base font-bold text-corpBlue-600 flex items-center gap-2 mb-3"><span class="material-symbols-outlined text-[20px]">list_alt</span> Actividades Realizadas</h4>
+                
+                <div id="actividadesContainer" class="space-y-4"></div>
+                
+                <button type="button" class="w-full mt-4 bg-corpBlue-50 hover:bg-corpBlue-100 text-corpBlue-600 border border-dashed border-corpBlue-300 font-bold py-2.5 rounded-lg transition flex justify-center items-center gap-2" onclick="addActividadRow()">
+                    <span class="material-symbols-outlined text-lg">add</span> Añadir Actividad
+                </button>
+            </div>
+
+            <!-- PERSONAL -->
+            <div class="mb-8 border-t border-slate-100 pt-6">
+                <h4 class="text-base font-bold text-indigo-700 flex items-center gap-2 mb-4"><span class="material-symbols-outlined text-[20px]">groups</span> Personal y Frentes</h4>
+                <div id="personnelContainer" class="space-y-4"></div>
+                
+                <div class="flex gap-2 mb-4 mt-4">
+                    <button type="button" class="w-2/3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-dashed border-indigo-300 font-bold py-2.5 rounded-lg transition flex justify-center items-center gap-2" onclick="addPersonnelRow()">
+                        <span class="material-symbols-outlined text-lg">add</span> Añadir Personal
+                    </button>
+                    <!-- BOTÓN DE RUBROS QUE ABRE EL MODAL -->
+                    <button type="button" class="w-1/3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-lg transition border border-slate-300 flex justify-center items-center gap-2" onclick="toggleModalConfig()">
+                        <span class="material-symbols-outlined text-lg">settings</span> Rubros
+                    </button>
+                </div>
+
+                <button type="button" id="btnPersonal" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2 transition" onclick="submitPersonal()">
+                    Guardar Personal <span class="material-symbols-outlined text-lg">save</span>
+                </button>
+            </div>
+
+            <!-- ANOTACIONES -->
+            <div class="border-t border-slate-100 pt-6">
+                <h4 class="text-base font-bold text-amber-600 flex items-center gap-2 mb-4"><span class="material-symbols-outlined text-[20px]">comment</span> Anotaciones</h4>
+                <div id="anotacionesContainer" class="space-y-4"></div>
+                <button type="button" class="w-full mt-4 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-dashed border-amber-300 font-bold py-2.5 rounded-lg transition flex justify-center items-center gap-2 mb-4" onclick="addAnotacionRow()">
+                    <span class="material-symbols-outlined text-lg">add</span> Añadir Anotación
+                </button>
+                <button type="button" id="btnAnotaciones" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2 transition" onclick="submitAnotaciones()">
+                    Guardar Anotaciones <span class="material-symbols-outlined text-lg">save</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. PESTAÑA MODIFICAR -->
+        <div id="tabModificar" class="tab-content bg-white p-6 rounded-xl shadow-md border border-slate-200">
+             <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                <span class="material-symbols-outlined text-corpBlue-600">manage_search</span> Consultar y Modificar
+            </h2>
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-end mb-6">
+                <div class="w-full sm:w-2/3">
+                    <label class="block text-sm font-semibold mb-1">Fecha a buscar:</label>
+                    <input type="date" id="editDateField" class="w-full p-2.5 border rounded-lg bg-white outline-none">
+                </div>
+                <button type="button" onclick="buscarReporteEdicion()" class="w-full sm:w-1/3 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-lg flex justify-center items-center gap-2 transition">
+                    <span class="material-symbols-outlined text-lg">search</span> Buscar
+                </button>
+            </div>
+            <div id="loadingModificar" class="hidden text-center text-corpBlue-600 font-bold py-8">Buscando...</div>
+            <div id="resultadosEdicion" class="space-y-4"></div>
+        </div>
+
+        <!-- 3. PESTAÑA PREVISUALIZAR PDF -->
+        <div id="tabPrevisualizar" class="tab-content bg-white p-6 rounded-xl shadow-md border border-slate-200">
+            <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                <span class="material-symbols-outlined text-corpBlue-600">picture_as_pdf</span> Generador de Documento
+            </h2>
+            <div class="flex flex-col sm:flex-row gap-4 items-end mb-6">
+                <div class="w-full sm:w-1/2">
+                    <label class="block text-sm font-semibold mb-1">Fecha a Previsualizar:</label>
+                    <input type="date" id="prevDateField" class="w-full p-2.5 border rounded-lg bg-slate-50 outline-none">
+                </div>
+                <button type="button" id="btnGenerarPrev" onclick="accionGenerarPrevisualizacion()" class="w-full sm:w-1/2 bg-corpBlue-600 hover:bg-corpBlue-700 text-white font-bold py-2.5 rounded-lg flex justify-center items-center gap-2 transition">
+                    <span class="material-symbols-outlined text-lg">magic_button</span> Generar Borrador
+                </button>
+            </div>
+            <div id="zoomControls" class="hidden justify-end items-center mb-2 bg-slate-50 p-2 rounded-lg border border-slate-200">
+                <label class="text-sm font-semibold mr-3 flex items-center gap-1"><span class="material-symbols-outlined text-[18px]">zoom_in</span> Zoom:</label>
+                <div class="flex border border-slate-300 rounded-lg overflow-hidden bg-white">
+                    <button type="button" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 font-bold border-r border-slate-300" onclick="cambiarZoom(-0.1)">-</button>
+                    <div id="zoomLabel" class="px-4 py-1 font-bold text-sm flex items-center justify-center min-w-[50px]">70%</div>
+                    <button type="button" class="px-3 py-1 bg-slate-100 hover:bg-slate-200 font-bold border-l border-slate-300" onclick="cambiarZoom(0.1)">+</button>
+                </div>
+            </div>
+            <div id="pdfViewer" class="w-full h-[500px] border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 font-bold overflow-auto">
+                <span>Aquí aparecerá el PDF generado para su revisión.</span>
+            </div>
+            <button type="button" id="btnGuardarOficial" class="hidden w-full mt-6 bg-corpGreen hover:bg-corpGreen-hover text-white font-bold py-3.5 rounded-xl justify-center items-center gap-2 transition" onclick="accionGuardarPDFDefinitivo()">
+                <span class="material-symbols-outlined">save</span> Confirmar y Guardar Oficial
+            </button>
+        </div>
+
+        <!-- 4. PESTAÑA ENVIAR -->
+        <div id="tabEnviar" class="tab-content bg-white p-6 rounded-xl shadow-md border border-slate-200">
+            <h2 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2 border-b border-slate-100 pb-4">
+                <span class="material-symbols-outlined text-corpBlue-600">forward_to_inbox</span> Envío por Correo
+            </h2>
+            <div class="mb-6 flex gap-4 items-end">
+                <div class="w-full sm:w-2/3">
+                    <label class="block text-sm font-semibold mb-1">Fecha del Reporte a Enviar:</label>
+                    <input type="date" id="envioDateField" class="w-full p-2.5 border rounded-lg bg-slate-50 outline-none">
+                </div>
+                <button type="button" onclick="cargarDatosMensajeria()" class="w-full sm:w-1/3 bg-slate-800 text-white font-bold py-2.5 rounded-lg flex justify-center items-center gap-2">
+                    <span class="material-symbols-outlined text-lg">sync</span> Cargar
+                </button>
+            </div>
+            <div class="space-y-4 border border-slate-200 p-5 rounded-xl bg-slate-50">
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-slate-600">Para:</label>
+                    <input type="text" id="envioPara" class="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:border-corpBlue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-slate-600">CC:</label>
+                    <input type="text" id="envioCc" class="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:border-corpBlue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-slate-600">Asunto:</label>
+                    <input type="text" id="envioAsunto" class="w-full p-2.5 border border-slate-300 rounded-lg outline-none font-bold">
+                </div>
+                <div>
+                    <label class="block text-sm font-semibold mb-1 text-slate-600">Cuerpo del Correo:</label>
+                    <textarea id="envioCuerpo" rows="6" class="w-full p-2.5 border border-slate-300 rounded-lg outline-none"></textarea>
+                </div>
+            </div>
+            <button type="button" id="btnEnviarCorreo" class="w-full mt-6 bg-corpGreen hover:bg-corpGreen-hover text-white font-bold py-3.5 rounded-xl flex justify-center items-center gap-2 transition" onclick="accionEnviarCorreoDefinitivo()">
+                <span class="material-symbols-outlined">send</span> Despachar Correo
+            </button>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- LÓGICA DE JAVASCRIPT                       -->
+    <!-- ========================================== -->
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const GOOGLE_APP_URL = urlParams.get('api') || "";
+        const PROJECT_ID = urlParams.get('projectId') || "";
+
+        const APP_STATE = { frentes: [], especialidades: [], rubrosMap: {} };
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            if (!GOOGLE_APP_URL) {
+                alert("⚠️ Acceso denegado. Redirigiendo al portal.");
+                window.location.href = "index.html"; return;
+            }
+            const savedUser = localStorage.getItem('indexCorp_user');
+            if(savedUser) {
+                document.getElementById('nav-user-initials').innerText = savedUser.substring(0, 2).toUpperCase();
+                document.getElementById('dropdown-user-name').innerText = "Usuario: " + savedUser;
+            }
+
+            // Setear la fecha de hoy en los inputs tipo 'date' (requieren formato YYYY-MM-DD)
+            const today = new Date().toISOString().split('T')[0];
+            ['dateField', 'prevDateField', 'envioDateField', 'editDateField'].forEach(id => {
+                const el = document.getElementById(id);
+                if(el) { el.value = today; }
+            });
+
+            await cargarConfiguracion();
+            addActividadRow(); addPersonnelRow(); addAnotacionRow();
+        });
+
+        // 1. FUNCIONALIDADES BASE
+        function formatDateForBackend(isoDateString) {
+            if(!isoDateString) return "";
+            const parts = isoDateString.split("-");
+            if (parts.length === 3) {
+                return `${parts[2]}/${parts[1]}/${parts[0]}`;
+            }
+            return isoDateString;
+        }
+
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('sidebar').classList.toggle('translate-x-0'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); }
+        function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
+        function toggleModalConfig() { document.getElementById('modal-config').classList.toggle('hidden'); }
+        function toggleModalFields() {
+            const isRubro = document.getElementById('modalTipo').value === 'rubro';
+            document.getElementById('modalFieldsRubro').classList.toggle('hidden', !isRubro);
+            document.getElementById('modalFieldsFrente').classList.toggle('hidden', isRubro);
+        }
+        window.onclick = e => { if (!e.target.closest('.relative')) document.getElementById('user-menu')?.classList.add('hidden'); };
+
+        function switchTab(tabId) {
+            // Reemplazo a la paleta corpBlue
+            document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active', 'bg-corpBlue-600', 'text-white', 'border-corpBlue-600'); b.classList.add('bg-white', 'text-slate-500', 'border-slate-300'); });
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            const map = { 'ingresar': 'btnTabIngresar', 'modificar': 'btnTabModificar', 'previsualizar': 'btnTabPrevisualizar', 'enviar': 'btnTabEnviar' };
+            const btn = document.getElementById(map[tabId]);
+            btn.classList.remove('bg-white', 'text-slate-500', 'border-slate-300'); btn.classList.add('active', 'bg-corpBlue-600', 'text-white', 'border-corpBlue-600');
+            document.getElementById('tab' + tabId.charAt(0).toUpperCase() + tabId.slice(1)).classList.add('active');
+        }
+
+        async function fetchAPI(action, dataPayload = {}) {
+            try {
+                const response = await fetch(GOOGLE_APP_URL, { method: 'POST', body: JSON.stringify({ action: action, data: dataPayload }) });
+                return await response.json();
+            } catch (error) { return { success: false, message: "Error de red." }; }
+        }
+
+        async function cargarConfiguracion() {
+            const res = await fetchAPI("get_config");
+            if(res.success) {
+                APP_STATE.frentes = res.data.frentes || [];
+                APP_STATE.especialidades = res.data.especialidades || [];
+                APP_STATE.rubrosMap = res.data.rubrosMap || {};
+                APP_STATE.correosPara = res.data.correosPara || "";
+                APP_STATE.correosCC = res.data.correosCC || "";
+                document.getElementById('sidebar-project-name').innerText = res.data.nombreProyecto || PROJECT_ID;
+            }
+        }
+
+        // 2. FUNCIÓN DE RECARGA NO DESTRUCTIVA
+        function refrescarSelectsActivos() {
+            document.querySelectorAll('.pers-card').forEach(card => {
+                const selEsp = card.querySelector('.pers-especialidad');
+                const selRubro = card.querySelector('.pers-rubro');
+                const selSector = card.querySelector('.pers-sector');
+                
+                const valEsp = selEsp.value;
+                const valRubro = selRubro.value;
+                const valSector = selSector.value;
+                
+                let eOpt = '<option value="" disabled>Especialidad</option>';
+                APP_STATE.especialidades.forEach(e => eOpt += `<option value="${e}">${e}</option>`);
+                selEsp.innerHTML = eOpt;
+                selEsp.value = valEsp;
+                
+                let fOpt = '<option value="" disabled>Frente</option>';
+                APP_STATE.frentes.forEach(f => fOpt += `<option value="${f}">${f}</option>`);
+                selSector.innerHTML = fOpt;
+                selSector.value = valSector; 
+                
+                actualizarRubrosSelect(selEsp);
+                selRubro.value = valRubro; 
+            });
+        }
+
+        async function guardarNuevaConfiguracion() {
+            const tipo = document.getElementById('modalTipo').value;
+            let payload = { tipo: tipo };
+            if(tipo === 'rubro') {
+                payload.especialidad = document.getElementById('modalEspecialidad').value.trim(); 
+                payload.rubro = document.getElementById('modalRubro').value.trim();
+                if(!payload.especialidad || !payload.rubro) return alert("Llene ambos campos.");
+            } else {
+                payload.frente = document.getElementById('modalFrente').value.trim();
+                if(!payload.frente) return alert("Llene el frente.");
+            }
+            const btn = document.getElementById('btnGuardarConfig'); const orig = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = "Guardando...";
+            
+            const res = await fetchAPI("agregarItemConfig", payload);
+            if(res.success) {
+                toggleModalConfig(); 
+                document.getElementById('modalEspecialidad').value = ""; 
+                document.getElementById('modalRubro').value = ""; 
+                document.getElementById('modalFrente').value = "";
+                
+                await cargarConfiguracion(); 
+                refrescarSelectsActivos();
+                alert(res.data);
+            } else {
+                alert(res.message);
+            }
+            btn.disabled = false; btn.innerHTML = orig;
+        }
+
+        // 3. GENERACIÓN DE FILAS Y BOTONES DE CANTIDAD
+        function changeQty(btn, delta) {
+            const input = btn.parentElement.querySelector('input');
+            let val = parseInt(input.value) || 0;
+            if((val + delta) >= 1) input.value = val + delta;
+        }
+
+        function addActividadRow(texto = "") {
+            const div = document.createElement('div');
+            div.className = 'bg-slate-50 p-4 rounded-xl border border-slate-200 relative mb-4 act-card';
+            div.innerHTML = `
+                <button type="button" class="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs" onclick="this.parentElement.remove()">✕</button>
+                <textarea class="act-texto w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none mb-3" rows="2" placeholder="Descripción...">${texto}</textarea>
+                <input type="file" class="act-foto w-full text-sm mb-3" accept="image/*">
+                <button type="button" class="w-full bg-slate-800 text-white py-2 rounded-lg text-sm" onclick="submitActividad(this)">Guardar Actividad Individual</button>
+            `;
+            document.getElementById('actividadesContainer').appendChild(div);
+        }
+
+        function actualizarRubrosSelect(selectEsp) {
+            const selectRubro = selectEsp.closest('.pers-card').querySelector('.pers-rubro');
+            const esp = selectEsp.value;
+            selectRubro.innerHTML = '<option value="" disabled selected>Rubro</option>';
+            if(APP_STATE.rubrosMap[esp]) {
+                APP_STATE.rubrosMap[esp].forEach(r => selectRubro.innerHTML += `<option value="${r}">${r}</option>`);
+            }
+        }
+
+        function addPersonnelRow() {
+            let eOpt = '<option value="" disabled selected>Especialidad</option>';
+            APP_STATE.especialidades.forEach(e => eOpt += `<option value="${e}">${e}</option>`);
+            let fOpt = '<option value="" disabled selected>Frente</option>';
+            APP_STATE.frentes.forEach(f => fOpt += `<option value="${f}">${f}</option>`);
+
+            const div = document.createElement('div');
+            div.className = 'bg-slate-50 p-4 rounded-xl border border-slate-200 relative mb-4 pers-card';
+            
+            div.innerHTML = `
+                <button type="button" class="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs" onclick="this.parentElement.remove()">✕</button>
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-3 mt-4">
+                    <select class="pers-especialidad p-2 text-sm border border-slate-300 rounded-lg outline-none bg-white" onchange="actualizarRubrosSelect(this)">${eOpt}</select>
+                    <select class="pers-rubro p-2 text-sm border border-slate-300 rounded-lg outline-none bg-white"><option value="" disabled selected>Rubro</option></select>
+                    <select class="pers-sector p-2 text-sm border border-slate-300 rounded-lg outline-none bg-white">${fOpt}</select>
+                </div>
+                
+                <div class="flex items-center border border-slate-300 rounded-lg overflow-hidden w-32 bg-slate-50 shadow-sm mt-1">
+                    <button type="button" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 font-bold text-slate-600 border-r border-slate-300 transition" onclick="changeQty(this, -1)">-</button>
+                    <input type="number" class="pers-cant w-full p-1.5 text-sm text-center outline-none border-none bg-white font-semibold" value="1" min="1">
+                    <button type="button" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 font-bold text-slate-600 border-l border-slate-300 transition" onclick="changeQty(this, 1)">+</button>
+                </div>
+            `;
+            document.getElementById('personnelContainer').appendChild(div);
+        }
+
+        function addAnotacionRow() {
+            const div = document.createElement('div');
+            div.className = 'bg-slate-50 p-4 rounded-xl border border-slate-200 relative mb-4 anot-card';
+            div.innerHTML = `
+                <button type="button" class="absolute top-2 right-2 bg-red-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs" onclick="this.parentElement.remove()">✕</button>
+                <input type="time" class="anot-hora p-2 text-sm border rounded-lg mb-2" value="${new Date().toTimeString().substring(0,5)}">
+                <textarea class="anot-texto w-full p-2.5 text-sm border rounded-lg" rows="2" placeholder="Descripción..."></textarea>
+            `;
+            document.getElementById('anotacionesContainer').appendChild(div);
+        }
+
+        // 4. GUARDADO DE BLOQUES
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader(); reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error);
+        });
+
+        async function submitActividad(btn) {
+            const fechaInput = document.getElementById('dateField').value;
+            const card = btn.closest('.act-card'); const txt = card.querySelector('.act-texto').value; const fileInput = card.querySelector('.act-foto');
+            if(!txt.trim() || !fechaInput) return alert("Verifique la fecha y la descripción de la actividad.");
+            
+            const orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = "Subiendo...";
+            let p = { fecha: formatDateForBackend(fechaInput), actividad: txt, fotoDatos: null };
+            if(fileInput.files.length > 0) { p.fotoMime = fileInput.files[0].type; p.fotoDatos = await toBase64(fileInput.files[0]); }
+            const res = await fetchAPI("guardarActividad", p);
+            if(res.success) { btn.innerHTML = "✅ Guardado"; setTimeout(() => card.remove(), 1000); } else { btn.disabled = false; btn.innerHTML = orig; alert(res.message); }
+        }
+        
+        async function submitPersonal() {
+            const fechaInput = document.getElementById('dateField').value;
+            if(!fechaInput) return alert("Ingrese la fecha del reporte.");
+            let p = { fecha: formatDateForBackend(fechaInput), especialidades: [], rubros: [], sectores: [], cantidades: [] };
+            
+            document.querySelectorAll('.pers-card').forEach(c => {
+                const e = c.querySelector('.pers-especialidad').value; 
+                const r = c.querySelector('.pers-rubro').value;
+                const s = c.querySelector('.pers-sector').value; 
+                const q = c.querySelector('.pers-cant').value;
+                if(e && r && s) { 
+                    p.especialidades.push(e); 
+                    p.rubros.push(r); 
+                    p.sectores.push(s); 
+                    p.cantidades.push(q); 
+                }
+            });
+            
+            if(p.rubros.length === 0) return alert("Agregue al menos un personal válido con todos sus datos completos.");
+            
+            const btn = document.getElementById('btnPersonal'); const orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = "Enviando...";
+            const res = await fetchAPI("guardarPersonal", p);
+            if(res.success) {
+                btn.innerHTML = "✅ Personal Enviado"; 
+                setTimeout(() => { document.getElementById('personnelContainer').innerHTML = ""; addPersonnelRow(); btn.disabled = false; btn.innerHTML = orig; }, 1500);
+            } else { btn.disabled = false; btn.innerHTML = orig; alert(res.message); }
+        }
+
+        async function submitAnotaciones() {
+            const fechaInput = document.getElementById('dateField').value;
+            if(!fechaInput) return alert("Ingrese la fecha del reporte.");
+            let p = { fecha: formatDateForBackend(fechaInput), anotaciones: [] };
+            document.querySelectorAll('.anot-card').forEach(c => {
+                const h = c.querySelector('.anot-hora').value; const t = c.querySelector('.anot-texto').value;
+                if(t.trim()) p.anotaciones.push({ hora: h, texto: t });
+            });
+            if(p.anotaciones.length === 0) return alert("Agregue al menos una anotación válida.");
+            const btn = document.getElementById('btnAnotaciones'); const orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = "Enviando...";
+            const res = await fetchAPI("guardarAnotaciones", p);
+            if(res.success) {
+                btn.innerHTML = "✅ Anotaciones Enviadas"; setTimeout(() => { document.getElementById('anotacionesContainer').innerHTML = ""; addAnotacionRow(); btn.disabled = false; btn.innerHTML = orig; }, 1500);
+            } else { btn.disabled = false; btn.innerHTML = orig; alert(res.message); }
+        }
+
+        // 5. EDICIÓN, PDF Y CORREO
+        async function buscarReporteEdicion() {
+            const fechaInput = document.getElementById('editDateField').value;
+            if(!fechaInput) return alert("Fecha incorrecta.");
+            const loading = document.getElementById('loadingModificar'); const cont = document.getElementById('resultadosEdicion');
+            cont.innerHTML = ""; loading.classList.remove('hidden');
+            const res = await fetchAPI("buscarReporteEdicion", { fecha: formatDateForBackend(fechaInput) });
+            loading.classList.add('hidden');
+            if(!res.success) return alert(res.message);
+            const data = res.data;
+            if(data.actividades.length === 0 && data.personal.length === 0 && data.anotaciones.length === 0) { cont.innerHTML = `<div class="text-center text-slate-500 py-8 bg-slate-50 rounded-xl">No hay registros.</div>`; return; }
+            if(data.actividades.length > 0) {
+                cont.innerHTML += `<h4 class="text-sm font-bold text-corpBlue-600 border-b pb-2 mb-3 mt-4">Actividades</h4>`;
+                data.actividades.forEach(a => cont.innerHTML += `<div class="bg-white border-l-4 border-corpBlue-500 p-4 rounded-lg shadow-sm border mb-2"><span class="text-[10px] font-bold text-slate-400">${a.id}</span><textarea id="edit_act_${a.id}" class="w-full p-2 mt-1 mb-2 text-sm border rounded" rows="2">${a.texto}</textarea><button class="bg-corpBlue-600 text-white text-xs px-3 py-1.5 rounded" onclick="updateRegistro('ACTIVIDADES', '${a.id}', this)">Actualizar</button></div>`);
+            }
+            if(data.personal.length > 0) {
+                cont.innerHTML += `<h4 class="text-sm font-bold text-indigo-700 border-b pb-2 mb-3 mt-4">Personal</h4>`;
+                data.personal.forEach(p => cont.innerHTML += `<div class="bg-white border-l-4 border-indigo-500 p-4 rounded-lg shadow-sm border mb-2"><span class="text-[10px] font-bold text-slate-400">${p.id}</span><div class="grid grid-cols-2 gap-2 mt-1 mb-2"><input id="edit_esp_${p.id}" value="${p.especialidad}" class="p-2 text-sm border rounded"><input id="edit_rubro_${p.id}" value="${p.rubro}" class="p-2 text-sm border rounded"><input id="edit_sector_${p.id}" value="${p.sector}" class="p-2 text-sm border rounded"><input type="number" id="edit_cant_${p.id}" value="${p.cantidad}" class="p-2 text-sm border rounded"></div><button class="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded" onclick="updateRegistro('PERSONAL', '${p.id}', this)">Actualizar</button></div>`);
+            }
+            if(data.anotaciones.length > 0) {
+                cont.innerHTML += `<h4 class="text-sm font-bold text-amber-600 border-b pb-2 mb-3 mt-4">Anotaciones</h4>`;
+                data.anotaciones.forEach(a => cont.innerHTML += `<div class="bg-white border-l-4 border-amber-500 p-4 rounded-lg shadow-sm border mb-2"><span class="text-[10px] font-bold text-slate-400">${a.id}</span><div class="mt-1 mb-2 flex gap-2"><input type="time" id="edit_hora_${a.id}" value="${a.hora}" class="p-2 text-sm border rounded"><input id="edit_anot_${a.id}" class="flex-grow p-2 text-sm border rounded" value="${a.texto}"></div><button class="bg-amber-500 text-white text-xs px-3 py-1.5 rounded" onclick="updateRegistro('ANOTACIONES', '${a.id}', this)">Actualizar</button></div>`);
+            }
+        }
+
+        async function updateRegistro(modulo, id, btn) {
+            let p = { fecha: formatDateForBackend(document.getElementById('editDateField').value), modulo: modulo, id: id };
+            if (modulo === "ACTIVIDADES") p.texto = document.getElementById('edit_act_' + id).value;
+            else if (modulo === "PERSONAL") { p.especialidad = document.getElementById('edit_esp_' + id).value; p.rubro = document.getElementById('edit_rubro_' + id).value; p.sector = document.getElementById('edit_sector_' + id).value; p.cantidad = document.getElementById('edit_cant_' + id).value; }
+            else if (modulo === "ANOTACIONES") { p.hora = document.getElementById('edit_hora_' + id).value; p.texto = document.getElementById('edit_anot_' + id).value; }
+            const orig = btn.innerText; btn.disabled = true; btn.innerText = "Guardando...";
+            const res = await fetchAPI("modificarRegistro", p);
+            if(res.success) { btn.innerText = "✅"; setTimeout(() => { btn.innerText = orig; btn.disabled = false; }, 1500); } else { btn.innerText = orig; btn.disabled = false; alert(res.message); }
+        }
+
+        let currentZoom = 0.7;
+        function cambiarZoom(delta) { currentZoom += delta; if(currentZoom < 0.3) currentZoom = 0.3; if(currentZoom > 2.0) currentZoom = 2.0; document.getElementById('zoomLabel').innerText = Math.round(currentZoom * 100) + '%'; const iframe = document.querySelector('#pdfViewer iframe'); if(iframe && iframe.contentDocument) iframe.contentDocument.body.style.zoom = currentZoom; }
+        
+        async function accionGenerarPrevisualizacion() {
+            const f = document.getElementById('prevDateField').value; if(!f) return alert("Fecha incorrecta.");
+            const btn = document.getElementById('btnGenerarPrev'); btn.disabled = true; btn.innerHTML = "Armando...";
+            document.getElementById('btnGuardarOficial').classList.add('hidden'); document.getElementById('pdfViewer').innerHTML = 'Cargando...';
+            const res = await fetchAPI("generarPrevisualizacionPDF", { fecha: formatDateForBackend(f) });
+            btn.disabled = false; btn.innerHTML = "Actualizar Borrador";
+            if(res.success) { document.getElementById('pdfViewer').innerHTML = `<iframe srcdoc="${res.data.replace(/"/g, '&quot;')}" width="100%" height="100%" onload="this.contentDocument.body.style.zoom = ${currentZoom};"></iframe>`; document.getElementById('zoomControls').classList.remove('hidden'); document.getElementById('btnGuardarOficial').classList.remove('hidden'); document.getElementById('btnGuardarOficial').classList.add('flex'); }
+            else document.getElementById('pdfViewer').innerHTML = res.message;
+        }
+
+        async function accionGuardarPDFDefinitivo() {
+            const btn = document.getElementById('btnGuardarOficial'); btn.disabled = true; btn.innerHTML = "Guardando...";
+            const res = await fetchAPI("guardarPDFDefinitivo", { fecha: formatDateForBackend(document.getElementById('prevDateField').value) });
+            if(res.success) { alert(res.data.mensaje); btn.classList.add('hidden'); document.getElementById('pdfViewer').innerHTML = '✅ Guardado.'; }
+            else { btn.disabled = false; btn.innerHTML = "Reintentar"; alert(res.message); }
+        }
+
+        function cargarDatosMensajeria() {
+            const f = document.getElementById('envioDateField').value; if(!f) return;
+            const p = f.split('-'); 
+            if(p.length !== 3) return;
+            document.getElementById('envioAsunto').value = `REPORTE DIARIO - ${document.getElementById('sidebar-project-name').innerText} - ${p[0].substring(2,4)}${p[1]}${p[2]} (${p[2]}/${p[1]}/${p[0]})`;
+            document.getElementById('envioCuerpo').value = "Buenas tardes estimados,\n\nPor el mediante, se adjunta el reporte diario correspondiente a la fecha del asunto del correo.\n\nEstaremos atentos a cualquier duda u observación.\n\nAtentamente,";
+            
+            const formatearCorreos = (texto) => texto.replace(/[\s\n\r,;]+/g, '; ').replace(/^; |; $/g, '');
+            document.getElementById('envioPara').value = formatearCorreos(APP_STATE.correosPara);
+            document.getElementById('envioCc').value = formatearCorreos(APP_STATE.correosCC);
+        }
+
+        async function accionEnviarCorreoDefinitivo() {
+            let p = { fecha: formatDateForBackend(document.getElementById('envioDateField').value), para: document.getElementById('envioPara').value, cc: document.getElementById('envioCc').value, asunto: document.getElementById('envioAsunto').value, cuerpo: document.getElementById('envioCuerpo').value };
+            if(!p.para || !p.asunto) return alert("Llene Para y Asunto.");
+            const btn = document.getElementById('btnEnviarCorreo'); const orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = "Despachando...";
+            const res = await fetchAPI("enviarReportePorCorreo", p);
+            if(res.success) { alert(res.data); btn.innerHTML = "✅ Enviado"; setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 3000); }
+            else { btn.disabled = false; btn.innerHTML = orig; alert(res.message); }
+        }
+    </script>
+</body>
+</html>

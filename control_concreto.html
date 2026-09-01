@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Control de Consumo de Concreto</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- CONFIGURACIÓN DE TU PALETA CORPORATIVA -->
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              corpBlue: {
+                50: '#ebf0f5',
+                100: '#d1dee8',
+                300: '#7aa3c2',
+                500: '#336a94',
+                600: '#233D5C', /* TU AZUL PRINCIPAL */
+                700: '#1c314a', /* Azul oscuro para efectos Hover */
+                800: '#142538',
+              },
+              corpGreen: {
+                DEFAULT: '#85B648', /* TU VERDE PRINCIPAL */
+                hover: '#719e3a'    /* Verde oscuro para efectos Hover */
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <style>
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; appearance: textfield; }
+        input[type=time]::-webkit-calendar-picker-indicator { cursor: pointer; }
+        input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; }
+        
+        .tab-content, .module-content { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-content.active, .module-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen">
+
+    <!-- BARRA SUPERIOR -->
+    <nav id="navbar-global" class="bg-corpBlue-600 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-40 shadow-md">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="hover:bg-corpBlue-500 p-1 rounded transition flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">menu</span>
+            </button>
+            <span class="text-lg font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">construction</span> Control de Concreto
+            </span>
+        </div>
+        
+        <div class="relative flex items-center gap-3">
+            <a href="index.html" class="hidden md:flex items-center gap-2 bg-corpBlue-700 hover:bg-corpBlue-800 px-3 py-1.5 rounded-lg text-sm font-bold transition border border-corpBlue-500">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span> Portal
+            </a>
+            <button onclick="toggleUserMenu()" id="nav-user-initials" class="w-9 h-9 bg-corpBlue-50 text-corpBlue-600 rounded-full font-bold flex items-center justify-center hover:bg-white transition shadow-sm">
+                --
+            </button>
+            <div id="user-menu" class="hidden absolute right-0 top-12 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden z-50">
+                <div class="px-4 py-3 border-b border-slate-100">
+                    <p id="dropdown-user-name" class="text-sm font-bold text-slate-800">Cargando...</p>
+                </div>
+                <a href="https://wa.me/51922442738" target="_blank" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition">
+                    <span class="material-symbols-outlined text-[20px]">help</span> Soporte
+                </a>
+                <div class="border-t border-slate-100"></div>
+                <a href="index.html?logout=true" class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition font-medium">
+                    <span class="material-symbols-outlined text-[20px]">logout</span> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-slate-900/50 z-40 transition-opacity" onclick="toggleSidebar()"></div>
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-6 flex flex-col items-center justify-center border-b border-slate-100 bg-slate-50 h-32">
+            <img src="./Logo_Haelservice.png" alt="Logo Empresa" class="h-10 w-auto object-contain mb-3">
+            <h2 class="font-bold text-slate-800 text-lg">Control de Concreto</h2>
+            <h3 id="sidebar-project-name" class="text-xs font-bold text-slate-500 uppercase tracking-wide">Cargando Proyecto...</h3>
+        </div>
+        <div class="p-4 flex-grow overflow-y-auto mt-2">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Navegación</p>
+            <a href="index.html" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-corpBlue-600 bg-corpBlue-50 hover:bg-corpBlue-100 rounded-lg transition mb-2">
+                <span class="material-symbols-outlined">business_center</span> Mis Proyectos
+            </a>
+        </div>
+    </aside>
+
+    <div class="max-w-5xl mx-auto p-4 mt-2">
+        
+        <!-- NAVEGACIÓN PRINCIPAL (MÓDULOS) -->
+        <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+            <button onclick="switchModule('metrados')" id="btn-mod-metrados" class="flex-1 bg-corpBlue-600 text-white border-corpBlue-600 border rounded-lg py-2.5 px-4 font-bold text-sm shadow-md transition whitespace-nowrap flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined text-lg">square_foot</span> Metrados
+            </button>
+            <button onclick="switchModule('mixers')" id="btn-mod-mixers" class="flex-1 bg-white text-slate-500 border border-slate-300 rounded-lg py-2.5 px-4 font-bold text-sm hover:bg-slate-50 transition whitespace-nowrap flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined text-lg">local_shipping</span> Mixers
+            </button>
+            <button onclick="switchModule('probetas')" id="btn-mod-probetas" class="flex-1 bg-white text-slate-500 border border-slate-300 rounded-lg py-2.5 px-4 font-bold text-sm hover:bg-slate-50 transition whitespace-nowrap flex justify-center items-center gap-2">
+                <span class="material-symbols-outlined text-lg">science</span> Probetas
+            </button>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MÓDULO 1: METRADOS -->
+        <!-- ========================================== -->
+        <div id="module-metrados" class="module-content active">
+            <!-- SUB-PESTAÑAS METRADOS -->
+            <div class="flex border-b border-slate-300 mb-6 bg-white rounded-t-xl overflow-hidden shadow-sm">
+                <button onclick="switchTab('tab-registro')" id="btn-tab-registro" class="tab-btn flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-corpBlue-600 text-corpBlue-600 bg-slate-50">
+                    <span class="material-symbols-outlined text-lg">edit_document</span> Registro Metrado
+                </button>
+                <button onclick="switchTab('tab-consulta')" id="btn-tab-consulta" class="tab-btn flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50">
+                    <span class="material-symbols-outlined text-lg">search</span> Consultar / Modificar
+                </button>
+            </div>
+
+            <!-- REGISTRO METRADOS -->
+            <div id="tab-registro" class="tab-content active bg-white p-6 rounded-b-xl rounded-t-none shadow-md">
+                <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
+                    <span id="form-icon" class="material-symbols-outlined text-3xl text-corpBlue-600">add_circle</span>
+                    <div>
+                        <h2 id="form-title" class="text-xl font-bold text-slate-800">Nuevo Registro de Metrado</h2>
+                        <p class="text-xs text-slate-500">Complete los datos geométricos y de colocado.</p>
+                    </div>
+                </div>
+                
+                <form id="concretoForm" class="space-y-8">
+                    <input type="hidden" id="form-mode" value="insert">
+
+                    <!-- IDENTIFICACIÓN -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base">badge</span> 1. Identificación
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">ID Automático</label>
+                                <input type="text" id="ID_Concreto" name="ID_Concreto" readonly class="w-full p-2.5 text-sm border border-slate-200 rounded-lg bg-slate-100 text-slate-500 font-mono outline-none cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo Concreto</label>
+                                <select id="Tipo_Concreto" name="Tipo_Concreto" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                    <option value="1175N57B">1175N57B</option>
+                                    <option value="1350N57B">1350N57B</option>
+                                    <option value="1350N67B">1350N67B</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Semana</label>
+                                <input type="number" id="Semana" name="Semana" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha</label>
+                                <!-- TIPO DATE CON CALENDARIO -->
+                                <input type="date" id="Fecha_Semana" name="Fecha_Semana" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- UBICACIÓN Y ELEMENTO -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base">architecture</span> 2. Ubicación y Elemento
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <div class="lg:col-span-2">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Elementos</label>
+                                <input type="text" id="Elementos" name="Elementos" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo Elemento</label>
+                                <select id="Tipo_Elemento" name="Tipo_Elemento" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                    <option value="Falsa zapata">Falsa zapata</option>
+                                    <option value="Saldo">Saldo</option>
+                                    <option value="Solado">Solado</option>
+                                    <option value="Zapata">Zapata</option>
+                                    <option value="Viga Cim">Viga Cim</option>
+                                    <option value="Placa">Placa</option>
+                                    <option value="Columna">Columna</option>
+                                    <option value="Viga">Viga</option>
+                                    <option value="Losa">Losa</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Etapa</label>
+                                <select id="Etapa" name="Etapa" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                    <option value="Subestructura">Subestructura</option>
+                                    <option value="Superestructura">Superestructura</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Nivel</label>
+                                <select id="Nivel" name="Nivel" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                    <option value="Cimentación">Cimentación</option>
+                                    <option value="Cisterna">Cisterna</option>
+                                    <option value="S4">S4</option>
+                                </select>
+                            </div>
+                            <div class="lg:col-span-5">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Eje (Opcional)</label>
+                                <input type="text" id="Eje" name="Eje" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VOLÚMENES -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                            <h3 class="text-sm font-bold text-corpBlue-600 mb-4 border-b border-corpBlue-100 pb-2">Metrado Geométrico (G)</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div><label class="block text-xs text-slate-600 mb-1">Largo</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="L_G" name="L_G"></div>
+                                <div><label class="block text-xs text-slate-600 mb-1">Ancho</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="B_G" name="B_G"></div>
+                                <div><label class="block text-xs text-slate-600 mb-1">Área. Manual</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="A_G" name="A_G"></div>
+                                <div><label class="block text-xs text-slate-600 mb-1">Altura</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="H_G" name="H_G"></div>
+                                <div class="col-span-2"><label class="block text-xs font-semibold mb-1">Vol. Manual</label><input type="number" step="0.01" class="calc-g w-full p-2.5 text-sm border rounded-lg" id="Parcial_GMan" name="Parcial_GMan"></div>
+                            </div>
+                            <div class="mt-4 bg-corpBlue-50 border border-corpBlue-200 rounded-lg p-4 text-center">
+                                <span class="block text-xs font-bold uppercase text-corpBlue-800">Volumen Total</span>
+                                <span id="preview_val_g" class="block text-2xl font-black mt-1 text-corpBlue-600">0.00 m³</span>
+                                <input type="hidden" id="Parcial_G" name="Parcial_G">
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                            <h3 class="text-sm font-bold text-indigo-700 mb-4 border-b border-indigo-100 pb-2">Concreto Colocado (C)</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div><label class="block text-xs text-slate-600 mb-1">Largo</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="L_C" name="L_C"></div>
+                                <div><label class="block text-xs text-slate-600 mb-1">Ancho</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="B_C" name="B_C"></div>
+                                <div><label class="block text-xs text-slate-600 mb-1">Área. Manual</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="A_C" name="A_C"></div>
+                                <div><label class="block text-xs text-slate-600 mb-1">Altura</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="H_C" name="H_C"></div>
+                                <div class="col-span-2"><label class="block text-xs font-semibold mb-1">Vol. Manual</label><input type="number" step="0.01" class="calc-c w-full p-2.5 text-sm border rounded-lg" id="Parcial_CMan" name="Parcial_CMan"></div>
+                            </div>
+                            <div class="mt-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4 text-center">
+                                <span class="block text-xs font-bold uppercase text-indigo-800">Volumen Total</span>
+                                <span id="preview_val_c" class="block text-2xl font-black mt-1 text-indigo-600">0.00 m³</span>
+                                <input type="hidden" id="Parcial_C" name="Parcial_C">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="flex gap-3 pt-4 border-t border-slate-100">
+                        <button type="button" id="btnCancelEdit" class="hidden w-1/3 bg-white text-slate-600 border border-slate-300 font-bold py-3 rounded-lg" onclick="resetForm()">Cancelar</button>
+                        <!-- BOTÓN DE ACCIÓN VERDE CORPORATIVO -->
+                        <button type="submit" id="btnSubmit" class="w-full bg-corpGreen hover:bg-corpGreen-hover text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2">Registrar Consumo <span class="material-symbols-outlined">save</span></button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- CONSULTA METRADOS -->
+            <div id="tab-consulta" class="tab-content bg-white p-6 rounded-b-xl rounded-t-none shadow-md">
+                <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-corpBlue-600">manage_search</span> Consultar Registros</h2>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-end mb-6">
+                    <div class="w-full sm:w-2/3">
+                        <label class="block text-sm font-semibold mb-1">Fecha (DD/MM/YYYY):</label>
+                        <input type="text" id="searchDate" placeholder="DD/MM/YYYY" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-corpBlue-500">
+                    </div>
+                    <button onclick="searchByDate()" class="w-full sm:w-1/3 bg-slate-800 text-white font-bold py-2.5 rounded-lg flex justify-center items-center gap-2"><span class="material-symbols-outlined">search</span> Buscar</button>
+                </div>
+                <div id="loadingMsg" class="hidden text-center text-corpBlue-600 font-bold py-8">Buscando...</div>
+                <div id="searchResults" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MÓDULO 2: MIXERS -->
+        <!-- ========================================== -->
+        <div id="module-mixers" class="module-content">
+            
+            <!-- SUB-PESTAÑAS MIXERS -->
+            <div class="flex border-b border-slate-300 mb-6 bg-white rounded-t-xl overflow-hidden shadow-sm">
+                <button onclick="switchMixerTab('tab-registro-mixer')" id="btn-tab-registro-mixer" class="tab-btn-mixer flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-corpBlue-600 text-corpBlue-600 bg-slate-50">
+                    <span class="material-symbols-outlined text-lg">local_shipping</span> Registro Ingreso
+                </button>
+                <button onclick="switchMixerTab('tab-consulta-mixer')" id="btn-tab-consulta-mixer" class="tab-btn-mixer flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50">
+                    <span class="material-symbols-outlined text-lg">search</span> Consultar / Modificar
+                </button>
+            </div>
+
+            <!-- PESTAÑA 1: REGISTRO DE INGRESO -->
+            <div id="tab-registro-mixer" class="tab-content active bg-white p-6 rounded-b-xl rounded-t-none shadow-md border border-slate-200">
+                <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
+                    <span id="form-icon-mixer" class="material-symbols-outlined text-3xl text-corpBlue-600">add_circle</span>
+                    <div>
+                        <h2 id="form-title-mixer" class="text-xl font-bold text-slate-800">Registro de Ingreso de Concreto</h2>
+                    </div>
+                </div>
+                
+                <form id="ingresoConcretoForm" class="space-y-8">
+                    <input type="hidden" id="form-mode-ingreso" value="insert">
+
+                    <!-- 1. DATOS GENERALES -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base">info</span> 1. Datos Generales
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">ID Ingreso</label>
+                                <input type="text" id="ID_Ingreso" name="ID_Ingreso" readonly class="w-full p-2.5 text-sm border border-slate-200 rounded-lg bg-slate-100 text-slate-500 font-mono outline-none cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo Concreto</label>
+                                <select id="Tipo_Mixer" name="Tipo" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Semana</label>
+                                <input type="number" id="Semana_Mixer" name="Semana" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none" placeholder="Ej. 40">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha</label>
+                                <!-- TIPO DATE CON CALENDARIO -->
+                                <input type="date" id="Fecha_Semana_Mixer" name="Fecha_Semana" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. DOCUMENTOS Y DESPACHO -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base">receipt_long</span> 2. Documentos
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Pedido (m³)</label>
+                                <input type="number" step="0.01" id="Pedido" name="Pedido" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none" placeholder="Ej. 8">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">N° Guía de Remisión</label>
+                                <input type="text" id="Guia" name="Guia" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none" placeholder="Ej. 001-023948">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3. CONTROL DE TIEMPOS -->
+                    <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                        <h3 class="text-sm font-bold text-corpBlue-600 mb-4 flex items-center gap-2 border-b border-corpBlue-100 pb-2">
+                            <span class="material-symbols-outlined text-base">schedule</span> 3. Control de Tiempos
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Salida Planta</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="time" id="Hora_SalidaPlanta" name="Hora_SalidaPlanta" class="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-corpBlue-500 outline-none bg-white">
+                                    <button type="button" onclick="stampTime('Hora_SalidaPlanta')" class="bg-slate-200 hover:bg-corpBlue-200 text-corpBlue-700 p-2 rounded-lg transition" title="Registrar hora actual"><span class="material-symbols-outlined text-[20px]">timer</span></button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Llegada Obra</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="time" id="Hora_LlegadaObra" name="Hora_LlegadaObra" class="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-corpBlue-500 outline-none bg-white">
+                                    <button type="button" onclick="stampTime('Hora_LlegadaObra')" class="bg-slate-200 hover:bg-corpBlue-200 text-corpBlue-700 p-2 rounded-lg transition" title="Registrar hora actual"><span class="material-symbols-outlined text-[20px]">timer</span></button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Inicio Vaciado</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="time" id="Hora_InicioVaciado" name="Hora_InicioVaciado" class="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-corpBlue-500 outline-none bg-white">
+                                    <button type="button" onclick="stampTime('Hora_InicioVaciado')" class="bg-slate-200 hover:bg-corpBlue-200 text-corpBlue-700 p-2 rounded-lg transition" title="Registrar hora actual"><span class="material-symbols-outlined text-[20px]">timer</span></button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Fin Vaciado</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="time" id="Hora_FinVaciado" name="Hora_FinVaciado" class="w-full p-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-corpBlue-500 outline-none bg-white">
+                                    <button type="button" onclick="stampTime('Hora_FinVaciado')" class="bg-slate-200 hover:bg-corpBlue-200 text-corpBlue-700 p-2 rounded-lg transition" title="Registrar hora actual"><span class="material-symbols-outlined text-[20px]">timer</span></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4. ENSAYOS Y PROBETAS -->
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-base">science</span> 4. Control de Calidad
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+                            <div class="md:col-span-1">
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">¿Se tomó Ensayo?</label>
+                                <select id="Ensayo" name="Ensayo" onchange="toggleEnsayoFields()" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                    <option value="No">No</option>
+                                    <option value="Si">Sí</option>
+                                </select>
+                            </div>
+                            <!-- Campos Condicionales de Probetas -->
+                            <div id="campos_probeta" class="hidden md:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">ID Probeta (Automático)</label>
+                                    <input type="text" id="Id_Probeta" name="Id_Probeta" readonly placeholder="Gen. Automática..." class="w-full p-2.5 text-sm border border-slate-200 rounded-lg bg-corpBlue-50 text-corpBlue-700 font-mono font-bold outline-none cursor-not-allowed">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Periodo 1 (Días)</label>
+                                    <input type="number" id="Periodo_1" name="Periodo_1" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none" placeholder="Ej. 7">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Periodo 2 (Días)</label>
+                                    <input type="number" id="Periodo_2" name="Periodo_2" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none" placeholder="Ej. 28">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BOTONES -->
+                    <div class="flex gap-3 pt-4 border-t border-slate-100">
+                        <button type="button" id="btnCancelEditMixer" class="hidden w-1/3 bg-white text-slate-600 border border-slate-300 font-bold py-3 rounded-lg flex justify-center items-center gap-2" onclick="resetFormMixer()">
+                            <span class="material-symbols-outlined text-lg">close</span> Cancelar Modificación
+                        </button>
+                        <!-- BOTÓN DE ACCIÓN VERDE CORPORATIVO -->
+                        <button type="submit" id="btnSubmitMixer" class="w-full bg-corpGreen hover:bg-corpGreen-hover text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2">
+                            Registrar Ingreso <span class="material-symbols-outlined text-lg">save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- PESTAÑA 2: CONSULTA Y BÚSQUEDA MIXERS -->
+            <div id="tab-consulta-mixer" class="tab-content bg-white p-6 rounded-b-xl rounded-t-none shadow-md border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-corpBlue-600">manage_search</span> Consultar Registros
+                </h2>
+                
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-end mb-6">
+                    <div class="w-full sm:w-2/3">
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Fecha (DD/MM/YYYY):</label>
+                        <input type="text" id="searchDateMixer" placeholder="DD/MM/YYYY" class="w-full p-2.5 border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-corpBlue-500 outline-none text-slate-700">
+                    </div>
+                    <button type="button" onclick="searchMixerByDate()" class="w-full sm:w-1/3 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 transition shadow-sm">
+                        <span class="material-symbols-outlined text-lg">search</span> Buscar
+                    </button>
+                </div>
+
+                <div id="loadingMsgMixer" class="hidden text-center text-corpBlue-600 font-bold py-8 flex flex-col items-center">
+                    <span class="material-symbols-outlined animate-spin text-4xl mb-2">refresh</span>
+                    Buscando registros en la base de datos...
+                </div>
+
+                <div id="searchResultsMixer" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="col-span-full text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-xl">
+                        <span class="material-symbols-outlined text-5xl mb-2 text-slate-300">calendar_month</span>
+                        <p>Seleccione una fecha y presione buscar para ver los registros del día.</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- MÓDULO 3: PROBETAS -->
+        <!-- ========================================== -->
+        <div id="module-probetas" class="module-content">
+            <!-- SUB-PESTAÑAS PROBETAS -->
+            <div class="flex border-b border-slate-300 mb-6 bg-white rounded-t-xl overflow-hidden shadow-sm">
+                <button onclick="switchProbetaTab('tab-pendientes')" id="btn-tab-pendientes" class="tab-btn-probeta flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-amber-500 text-amber-600 bg-slate-50">
+                    <span class="material-symbols-outlined text-lg">notification_important</span> Pendientes
+                </button>
+                <button onclick="switchProbetaTab('tab-registro-probeta')" id="btn-tab-registro-probeta" class="tab-btn-probeta flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50">
+                    <span class="material-symbols-outlined text-lg">edit_document</span> Registro Probetas
+                </button>
+                <button onclick="switchProbetaTab('tab-consulta-probeta')" id="btn-tab-consulta-probeta" class="tab-btn-probeta flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50">
+                    <span class="material-symbols-outlined text-lg">search</span> Consultar / Modificar
+                </button>
+            </div>
+
+            <!-- PESTAÑA 1: LISTA DE PENDIENTES -->
+            <div id="tab-pendientes" class="tab-content active bg-white p-6 rounded-b-xl rounded-t-none shadow-md border border-slate-200">
+                <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-4">
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-amber-500">pending_actions</span> Probetas por Ensayar
+                    </h2>
+                    <button onclick="loadPendingProbetas()" class="bg-amber-50 hover:bg-amber-100 text-amber-700 p-2 px-4 rounded-lg flex items-center gap-2 transition font-bold text-sm border border-amber-200">
+                        <span class="material-symbols-outlined text-lg">refresh</span> Actualizar Lista
+                    </button>
+                </div>
+                <div id="loadingProbetas" class="hidden text-center text-amber-600 font-bold py-8 flex flex-col items-center">
+                    <span class="material-symbols-outlined animate-spin text-4xl mb-2">refresh</span> Buscando...
+                </div>
+                <div id="pendingProbetasList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="col-span-full text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-xl">
+                        Presiona "Actualizar Lista" para buscar probetas pendientes.
+                    </div>
+                </div>
+            </div>
+
+            <!-- PESTAÑA 2: FORMULARIO DE LLENADO/MODIFICACIÓN -->
+            <div id="tab-registro-probeta" class="tab-content bg-white p-6 rounded-b-xl rounded-t-none shadow-md border border-slate-200">
+                <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
+                    <span class="material-symbols-outlined text-3xl text-indigo-600">science</span>
+                    <div>
+                        <h2 id="form-title-probeta" class="text-xl font-bold text-slate-800">Resultados de Laboratorio</h2>
+                        <p id="form-subtitle-probeta" class="text-xs text-slate-500">Seleccione un ensayo desde Pendientes o Consultar.</p>
+                    </div>
+                </div>
+                
+                <form id="probetaForm" class="space-y-6">
+                    <input type="hidden" id="Probeta_FilaFisica" name="filaFisica">
+                    <input type="hidden" id="Probeta_FcBase" name="fcBase">
+                    <input type="hidden" id="Probeta_DiasEnsayos" name="diasEnsayos">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ID Probeta</label>
+                            <input type="text" id="Probeta_ID" name="idProbeta" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500 font-mono cursor-not-allowed">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Vaciado (Modificable)</label>
+                            <!-- TIPO DATE CON CALENDARIO -->
+                            <input type="date" id="Probeta_FechaSemana" name="fechaSemana" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha Rotura (Modificable)</label>
+                            <!-- TIPO DATE CON CALENDARIO -->
+                            <input type="date" id="Probeta_FechaRotura" name="fechaRotura" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Elementos Vaciados</label>
+                            <input type="text" id="Probeta_Elementos" name="elementos" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">F'c Muestra 1</label>
+                            <input type="number" step="0.01" id="Probeta_P1" name="fcP1" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500 text-center">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">F'c Muestra 2</label>
+                            <input type="number" step="0.01" id="Probeta_P2" name="fcP2" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500 text-center">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">F'c Muestra 3 (Opcional)</label>
+                            <input type="number" step="0.01" id="Probeta_P3" name="fcP3" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500 text-center">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">ID Certificado Lab.</label>
+                            <input type="text" id="Probeta_Certificado" name="idCertificado" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Status Final</label>
+                            <select id="Probeta_Status" name="status" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500">
+                                <option value="Conforme">Conforme</option>
+                                <option value="Observado">Observado</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Adjuntar Certificado (Opcional si solo modifica)</label>
+                            <input type="file" id="Probeta_PDF" accept="application/pdf" class="w-full text-sm text-slate-500 border border-slate-300 rounded-lg p-1 bg-white">
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100 flex gap-3">
+                        <button type="button" class="w-1/3 bg-white text-slate-600 border border-slate-300 font-bold py-3 rounded-lg" onclick="document.getElementById('probetaForm').reset(); switchProbetaTab('tab-pendientes');">Cancelar</button>
+                        <!-- BOTÓN DE ACCIÓN VERDE CORPORATIVO -->
+                        <button type="submit" id="btnSubmitProbeta" class="w-full bg-corpGreen hover:bg-corpGreen-hover text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2 transition">
+                            Guardar Ensayo <span class="material-symbols-outlined text-lg">save</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- PESTAÑA 3: CONSULTA / MODIFICACIÓN -->
+            <div id="tab-consulta-probeta" class="tab-content bg-white p-6 rounded-b-xl rounded-t-none shadow-md border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <span class="material-symbols-outlined text-corpBlue-600">manage_search</span> Consultar Probetas
+                </h2>
+                
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-end mb-6">
+                    <div class="w-full sm:w-2/3">
+                        <label class="block text-sm font-semibold text-slate-600 mb-1">Fecha de Vaciado (DD/MM/YYYY):</label>
+                        <input type="text" id="searchDateProbeta" placeholder="DD/MM/YYYY" class="w-full p-2.5 border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-corpBlue-500">
+                    </div>
+                    <button type="button" onclick="searchProbetasByDate()" class="w-full sm:w-1/3 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-lg flex justify-center items-center gap-2">
+                        <span class="material-symbols-outlined text-lg">search</span> Buscar
+                    </button>
+                </div>
+
+                <div id="loadingMsgProbeta" class="hidden text-center text-corpBlue-600 font-bold py-8">Buscando en la base de datos...</div>
+                <div id="searchResultsProbeta" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const GOOGLE_APP_URL = urlParams.get('api');
+        const PROJECT_ID = urlParams.get('projectId') || "";
+
+        if (!GOOGLE_APP_URL) {
+            alert("⚠️ Acceso denegado o sesión no iniciada. Serás redirigido al portal principal.");
+            window.location.href = "index.html"; 
+        }
+
+        // --- FUNCIONES PARA ABRIR/CERRAR MENÚS ---
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('sidebar').classList.toggle('translate-x-0'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); }
+        function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
+        window.onclick = e => { if (!e.target.closest('.relative')) document.getElementById('user-menu')?.classList.add('hidden'); };
+
+        // --- CARGAR DATOS DE USUARIO AL INICIO ---
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedUser = localStorage.getItem('indexCorp_user');
+            if(savedUser) {
+                const initialsEl = document.getElementById('nav-user-initials');
+                const nameEl = document.getElementById('dropdown-user-name');
+                if (initialsEl) initialsEl.innerText = savedUser.substring(0, 2).toUpperCase();
+                if (nameEl) nameEl.innerText = "Usuario: " + savedUser;
+            }
+        });
+
+        async function loadConfigData() {
+            if (!GOOGLE_APP_URL) return;
+            try {
+                const res = await fetch(`${GOOGLE_APP_URL}?action=get_config`);
+                const config = await res.json();
+
+                // Cargar nombre del proyecto en el Menú Lateral
+                const sidebarProj = document.getElementById('sidebar-project-name');
+                if(sidebarProj) sidebarProj.innerText = config.nombreProyecto || PROJECT_ID;
+
+                const populateSelect = (id, optionsArray) => {
+                    const select = document.getElementById(id);
+                    if (!select) return;
+                    select.innerHTML = ''; 
+                    optionsArray.forEach(opt => {
+                        const option = document.createElement('option');
+                        option.value = opt;
+                        option.textContent = opt;
+                        select.appendChild(option);
+                    });
+                };
+
+                populateSelect('Tipo_Concreto', config.tiposConcreto);
+                populateSelect('Tipo_Mixer', config.tiposConcreto); 
+                populateSelect('Tipo_Elemento', config.tiposElemento);
+                populateSelect('Etapa', config.etapas);
+                populateSelect('Nivel', config.niveles);
+
+            } catch (error) {
+                console.error("Error cargando las listas desplegables:", error);
+            }
+        }
+
+        // GESTIÓN DE MÓDULOS PRINCIPALES
+        function switchModule(moduleName) {
+            document.querySelectorAll('.module-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('[id^="btn-mod-"]').forEach(btn => {
+                btn.classList.remove('bg-corpBlue-600', 'text-white', 'border-corpBlue-600');
+                btn.classList.add('bg-white', 'text-slate-500', 'border-slate-300');
+            });
+            document.getElementById('module-' + moduleName).classList.add('active');
+            const activeBtn = document.getElementById('btn-mod-' + moduleName);
+            activeBtn.classList.remove('bg-white', 'text-slate-500', 'border-slate-300');
+            activeBtn.classList.add('bg-corpBlue-600', 'text-white', 'border-corpBlue-600');
+        }
+
+        // ==========================================
+        // LÓGICA METRADOS
+        // ==========================================
+        function switchTab(tabId) {
+            document.getElementById('tab-registro').classList.remove('active');
+            document.getElementById('tab-consulta').classList.remove('active');
+            const btnReg = document.getElementById('btn-tab-registro');
+            const btnCon = document.getElementById('btn-tab-consulta');
+            btnReg.className = "tab-btn flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 text-slate-500 border-transparent hover:bg-slate-50";
+            btnCon.className = "tab-btn flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 text-slate-500 border-transparent hover:bg-slate-50";
+            document.getElementById(tabId).classList.add('active');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.remove('text-slate-500', 'border-transparent');
+            activeBtn.classList.add('border-corpBlue-600', 'text-corpBlue-600', 'bg-slate-50');
+        }
+
+        function applyDateMask(inputElement) {
+            if(!inputElement) return;
+            inputElement.addEventListener('input', function(e) {
+                let val = this.value.replace(/\D/g, '');
+                if(val.length >= 2 && val.length < 4) val = val.substring(0,2) + '/' + val.substring(2);
+                else if(val.length >= 4) val = val.substring(0,2) + '/' + val.substring(2,4) + '/' + val.substring(4,8);
+                this.value = val;
+            });
+        }
+
+        window.onload = () => {
+            loadConfigData(); 
+            resetForm();
+            resetFormMixer();
+            // Solo aplicamos la máscara a los buscadores porque los registros ya son input type="date"
+            applyDateMask(document.getElementById('searchDate'));
+            applyDateMask(document.getElementById('searchDateMixer'));
+            applyDateMask(document.getElementById('searchDateProbeta'));
+        };
+
+        const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
+
+        function calculateG() {
+            const L = getVal('L_G'), B = getVal('B_G'), A = getVal('A_G'), H = getVal('H_G'), Man = getVal('Parcial_GMan');
+            let total = Man !== 0 ? Man : (A !== 0 ? A * H : L * B * H);
+            const finalVol = (Math.round(total * 100) / 100).toFixed(2);
+            document.getElementById('Parcial_G').value = finalVol;
+            document.getElementById('preview_val_g').innerText = finalVol + " m³";
+        }
+
+        function calculateC() {
+            const L = getVal('L_C'), B = getVal('B_C'), A = getVal('A_C'), H = getVal('H_C'), Man = getVal('Parcial_CMan');
+            let total = Man !== 0 ? Man : (A !== 0 ? A * H : L * B * H);
+            const finalVol = (Math.round(total * 100) / 100).toFixed(2);
+            document.getElementById('Parcial_C').value = finalVol;
+            document.getElementById('preview_val_c').innerText = finalVol + " m³";
+        }
+
+        document.querySelectorAll('.calc-g').forEach(input => input.addEventListener('input', calculateG));
+        document.querySelectorAll('.calc-c').forEach(input => input.addEventListener('input', calculateC));
+
+        // Formatea fechas YYYY-MM-DD para mostrarlas en el frontend como DD/MM/YYYY si se necesita, 
+        // pero como ahora usamos type="date", el value debe ser YYYY-MM-DD
+        function formatDateForInputDate(dStr) {
+             if(!dStr) return "";
+             let str = String(dStr);
+             if (str.includes('T')) {
+                  return str.split('T')[0];
+             }
+             if (str.includes('/')) {
+                 const p = str.split('/');
+                 if(p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`;
+             }
+             return str;
+        }
+
+        function searchByDate() {
+            const dateFormatted = document.getElementById('searchDate').value;
+            if (!dateFormatted || dateFormatted.length !== 10) { alert("Formato requerido: DD/MM/YYYY"); return; }
+            const container = document.getElementById('searchResults');
+            const loading = document.getElementById('loadingMsg');
+            container.innerHTML = "";
+            loading.classList.remove('hidden');
+
+            fetch(`${GOOGLE_APP_URL}?action=search_metrado&fecha=${encodeURIComponent(dateFormatted)}`)
+                .then(res => res.json())
+                .then(data => {
+                    loading.classList.add('hidden');
+                    if(data.length === 0) {
+                        container.innerHTML = `<div class="col-span-full text-center py-8">No hay registros para ${dateFormatted}</div>`;
+                        return;
+                    }
+
+                    let totalM3 = 0;
+                    data.forEach(item => {
+                        const val = parseFloat(item.Parcial_G);
+                        if (!isNaN(val)) totalM3 += val;
+                    });
+                    
+                    const totalHeader = document.createElement('div');
+                    totalHeader.className = "col-span-full bg-corpBlue-50 border border-corpBlue-200 text-corpBlue-800 p-4 rounded-xl flex justify-between items-center mb-4";
+                    totalHeader.innerHTML = `<span class="font-bold">Total del Día:</span><span class="text-xl font-black">${totalM3.toFixed(2)} m³</span>`;
+                    container.appendChild(totalHeader);
+
+                    data.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = "bg-white border rounded-xl p-4 cursor-pointer flex justify-between hover:border-corpBlue-400 hover:shadow-md transition";
+                        card.onclick = () => loadRecordForEdit(item);
+                        card.innerHTML = `
+                            <div>
+                                <span class="text-[10px] bg-slate-100 px-2 rounded">${item.Tipo_Concreto}</span>
+                                <h4 class="font-bold">${item.Elementos} <span class="text-sm font-normal">(${item.Tipo_Elemento})</span></h4>
+                                <p class="text-xs text-slate-400">${item.ID_Concreto}</p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-corpBlue-600 font-black">${item.Parcial_G} m³</div>
+                                <div class="text-xs text-slate-400 mt-1">Editar ✎</div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                })
+                .catch(() => {
+                    loading.classList.add('hidden');
+                    container.innerHTML = '<div class="col-span-full text-red-500 text-center">Error de conexión.</div>';
+                });
+        }
+
+        function loadRecordForEdit(item) {
+            document.getElementById('form-mode').value = 'update';
+            document.getElementById('form-title').innerText = 'Modificar Registro: ' + item.Elementos;
+            document.getElementById('form-icon').innerText = 'edit_note';
+            
+            const btn = document.getElementById('btnSubmit');
+            btn.innerHTML = 'Actualizar Consumo <span class="material-symbols-outlined text-lg">update</span>';
+            btn.classList.replace('bg-corpGreen', 'bg-indigo-600');
+            btn.classList.replace('hover:bg-corpGreen-hover', 'hover:bg-indigo-700');
+            
+            document.getElementById('btnCancelEdit').classList.remove('hidden');
+            
+            item.Fecha_Semana = formatDateForInputDate(item.Fecha_Semana);
+
+            const fields = ['ID_Concreto', 'Tipo_Concreto', 'Semana', 'Fecha_Semana', 'Elementos', 'Tipo_Elemento', 'Etapa', 'Nivel', 'Eje', 'L_G', 'B_G', 'A_G', 'H_G', 'Parcial_GMan', 'L_C', 'B_C', 'A_C', 'H_C', 'Parcial_CMan'];
+            fields.forEach(f => { if(document.getElementById(f)) document.getElementById(f).value = item[f] || ""; });
+
+            calculateG(); calculateC();
+            switchTab('tab-registro');
+        }
+
+        function resetForm() {
+            document.getElementById('concretoForm').reset();
+            document.getElementById('form-mode').value = 'insert';
+            document.getElementById('form-title').innerText = 'Nuevo Registro de Metrado';
+            document.getElementById('form-icon').innerText = 'add_circle';
+            
+            const btn = document.getElementById('btnSubmit');
+            btn.innerHTML = 'Registrar Consumo <span class="material-symbols-outlined text-lg">save</span>';
+            btn.classList.replace('bg-indigo-600', 'bg-corpGreen');
+            btn.classList.replace('hover:bg-indigo-700', 'hover:bg-corpGreen-hover');
+            
+            document.getElementById('btnCancelEdit').classList.add('hidden');
+            document.getElementById('ID_Concreto').value = 'Generación Automática...';
+            
+            // Setear la fecha actual por defecto en el input date
+            document.getElementById('Fecha_Semana').value = new Date().toISOString().split('T')[0];
+            
+            calculateG(); calculateC();
+        }
+
+        // --- FUNCION AUXILIAR PARA VOLVER A DD/MM/YYYY ANTES DE MANDAR AL SERVIDOR ---
+        function formatInputDateToSpanish(isoString) {
+             if(!isoString) return "";
+             const p = isoString.split('-');
+             if(p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+             return isoString;
+        }
+
+        document.getElementById('concretoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const dateVal = document.getElementById('Fecha_Semana').value;
+            if(!dateVal) { alert("Debe ingresar una fecha."); return; }
+            
+            const submitBtn = document.getElementById('btnSubmit');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Procesando... <span class="material-symbols-outlined animate-spin text-lg">refresh</span>';
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            data.Parcial_G = document.getElementById('Parcial_G').value;
+            data.Parcial_C = document.getElementById('Parcial_C').value;
+            
+            // Re-formatear fecha antes de enviar al script
+            data.Fecha_Semana = formatInputDateToSpanish(data.Fecha_Semana);
+
+            const payload = { module: 'metrado', action: document.getElementById('form-mode').value, data: data };
+
+            fetch(GOOGLE_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+            .then(res => res.json())
+            .then(response => {
+                if(response.status === "success") {
+                    alert(payload.action === 'insert' ? `✅ Guardado exitoso. ID: ${response.idGenerado}` : "✅ Actualización exitosa.");
+                    resetForm();
+                } else alert("Error: " + response.message);
+            })
+            .catch(() => alert("Ocurrió un error al guardar."))
+            .finally(() => { submitBtn.disabled = false; submitBtn.innerHTML = originalText; });
+        });
+
+        // ==========================================
+        // LÓGICA MIXERS 
+        // ==========================================
+        function switchMixerTab(tabId) {
+            document.getElementById('tab-registro-mixer').classList.remove('active');
+            document.getElementById('tab-consulta-mixer').classList.remove('active');
+            const btnReg = document.getElementById('btn-tab-registro-mixer');
+            const btnCon = document.getElementById('btn-tab-consulta-mixer');
+            
+            btnReg.className = "tab-btn-mixer flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 text-slate-500 border-transparent hover:bg-slate-50";
+            btnCon.className = "tab-btn-mixer flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 text-slate-500 border-transparent hover:bg-slate-50";
+            
+            document.getElementById(tabId).classList.add('active');
+            
+            const activeBtn = tabId === 'tab-registro-mixer' ? btnReg : btnCon;
+            activeBtn.classList.remove('text-slate-500', 'border-transparent');
+            activeBtn.classList.add('border-corpBlue-600', 'text-corpBlue-600', 'bg-slate-50');
+        }
+
+        function stampTime(inputId) {
+            const now = new Date();
+            const hh = String(now.getHours()).padStart(2, '0');
+            const mm = String(now.getMinutes()).padStart(2, '0');
+            document.getElementById(inputId).value = `${hh}:${mm}`;
+        }
+
+        function toggleEnsayoFields() {
+            const selectEnsayo = document.getElementById('Ensayo').value;
+            const container = document.getElementById('campos_probeta');
+            const inputIdProbeta = document.getElementById('Id_Probeta');
+            
+            if (selectEnsayo === 'Si') {
+                container.classList.remove('hidden');
+                if(!inputIdProbeta.value || inputIdProbeta.value === "") {
+                     inputIdProbeta.value = 'Generación Automática...'; 
+                }
+            } else {
+                container.classList.add('hidden');
+                inputIdProbeta.value = '';
+                document.getElementById('Periodo_1').value = '';
+                document.getElementById('Periodo_2').value = '';
+            }
+        }
+        
+        function resetFormMixer() {
+            document.getElementById('ingresoConcretoForm').reset();
+            document.getElementById('form-mode-ingreso').value = 'insert';
+            document.getElementById('form-title-mixer').innerText = 'Registro de Ingreso de Concreto';
+            document.getElementById('form-icon-mixer').innerText = 'add_circle';
+            
+            const btn = document.getElementById('btnSubmitMixer');
+            btn.innerHTML = 'Registrar Ingreso <span class="material-symbols-outlined text-lg">save</span>';
+            btn.classList.replace('bg-indigo-600', 'bg-corpGreen');
+            btn.classList.replace('hover:bg-indigo-700', 'hover:bg-corpGreen-hover');
+            
+            document.getElementById('btnCancelEditMixer').classList.add('hidden');
+            document.getElementById('ID_Ingreso').value = 'Generación Automática...';
+            document.getElementById('Fecha_Semana_Mixer').value = new Date().toISOString().split('T')[0];
+
+            toggleEnsayoFields();
+        }
+
+        document.getElementById('ingresoConcretoForm').addEventListener('submit', function(e) {
+            e.preventDefault(); 
+            if (GOOGLE_APP_URL === "PEGAR_AQUI_TU_LINK_DE_LA_APP_WEB") { alert("Reemplaza la URL del App Script."); return; }
+
+            const dateVal = document.getElementById('Fecha_Semana_Mixer').value;
+            if(!dateVal) { alert("Debe ingresar una fecha."); return; }
+
+            const submitBtn = document.getElementById('btnSubmitMixer');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Procesando... <span class="material-symbols-outlined animate-spin text-lg">refresh</span>';
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            let p1 = data.Periodo_1;
+            let p2 = data.Periodo_2;
+            
+            if (p1 && p2) {
+                data.Periodos_Ensayos = `${p1} y ${p2}`;
+            } else if (p1) {
+                data.Periodos_Ensayos = p1;
+            } else if (p2) {
+                data.Periodos_Ensayos = p2;
+            } else {
+                data.Periodos_Ensayos = "";
+            }
+            
+            delete data.Periodo_1;
+            delete data.Periodo_2;
+
+            // Re-formatear fecha antes de enviar al script
+            data.Fecha_Semana = formatInputDateToSpanish(data.Fecha_Semana);
+
+            const payload = { module: 'mixer', action: document.getElementById('form-mode-ingreso').value, data: data };
+
+            fetch(GOOGLE_APP_URL, { method: 'POST', body: JSON.stringify(payload) })
+            .then(res => res.json())
+            .then(response => {
+                if(response.status === "success") {
+                    alert(payload.action === 'insert' ? `✅ Mixer Guardado. ID: ${response.idGenerado}` : "✅ Mixer Actualizado exitosamente.");
+                    resetFormMixer();
+                } else alert("Error: " + response.message);
+            })
+            .catch(() => alert("Ocurrió un error al guardar."))
+            .finally(() => { submitBtn.disabled = false; submitBtn.innerHTML = originalText; });
+        });
+
+        function searchMixerByDate() {
+            const dateFormatted = document.getElementById('searchDateMixer').value;
+            if (!dateFormatted || dateFormatted.length !== 10) { alert("Formato requerido: DD/MM/YYYY"); return; }
+
+            const container = document.getElementById('searchResultsMixer');
+            const loading = document.getElementById('loadingMsgMixer');
+            
+            container.innerHTML = "";
+            loading.classList.remove('hidden');
+
+            fetch(`${GOOGLE_APP_URL}?action=search_mixer&fecha=${encodeURIComponent(dateFormatted)}`)
+                .then(res => res.json())
+                .then(data => {
+                    loading.classList.add('hidden');
+                    if(data.length === 0) {
+                        container.innerHTML = `
+                        <div class="col-span-full text-center text-slate-500 py-8 bg-slate-50 rounded-xl">
+                            <span class="material-symbols-outlined text-4xl mb-2 text-slate-300">search_off</span>
+                            <p>No se encontraron ingresos de concreto para el día ${dateFormatted}.</p>
+                        </div>`;
+                        return;
+                    }
+
+                    let totalPedido = 0;
+                    data.forEach(item => {
+                        const val = parseFloat(item.Pedido);
+                        if (!isNaN(val)) totalPedido += val;
+                    });
+                    
+                    const totalHeader = document.createElement('div');
+                    totalHeader.className = "col-span-full bg-corpBlue-50 border border-corpBlue-200 text-corpBlue-800 p-4 rounded-xl flex justify-between items-center mb-4";
+                    totalHeader.innerHTML = `<span class="font-bold">Total Ingresado:</span><span class="text-xl font-black">${totalPedido.toFixed(2)} m³</span>`;
+                    container.appendChild(totalHeader);
+
+                    data.forEach(item => {
+                        const card = document.createElement('div');
+                        card.className = "bg-white border border-slate-200 hover:border-corpBlue-400 hover:shadow-md rounded-xl p-4 cursor-pointer transition flex justify-between items-center group relative overflow-hidden";
+                        card.onclick = () => loadRecordForEditMixer(item);
+                        
+                        let ensayoTag = item.Ensayo === 'Si' ? `<div class="absolute top-0 right-0 bg-yellow-100 text-yellow-700 text-[9px] font-bold px-2 py-1 rounded-bl-lg">CON ENSAYO</div>` : '';
+                        
+                        card.innerHTML = `
+                            ${ensayoTag}
+                            <div>
+                                <span class="text-[10px] font-bold bg-slate-100 text-slate-500 px-2 py-0.5 rounded uppercase">${item.Tipo}</span>
+                                <h4 class="font-bold text-slate-800 mt-1">Guía: ${item.Guia}</h4>
+                                <p class="text-xs text-slate-400 mt-1 font-mono">${item.ID_Ingreso}</p>
+                            </div>
+                            <div class="text-right mt-2">
+                                <div class="text-corpBlue-600 font-black text-lg">${item.Pedido} m³</div>
+                                <div class="text-xs text-slate-400 group-hover:text-corpBlue-600 flex items-center gap-1 justify-end mt-1 transition">
+                                    Editar <span class="material-symbols-outlined text-[14px]">edit</span>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                })
+                .catch(() => {
+                    loading.classList.add('hidden');
+                    container.innerHTML = '<div class="col-span-full text-red-500 text-center py-4 bg-red-50 rounded-xl">Error de conexión.</div>';
+                });
+        }
+
+        function loadRecordForEditMixer(item) {
+            document.getElementById('form-mode-ingreso').value = 'update';
+            document.getElementById('form-title-mixer').innerText = 'Modificar Ingreso: ' + item.Guia;
+            document.getElementById('form-icon-mixer').innerText = 'edit_note';
+            
+            const btn = document.getElementById('btnSubmitMixer');
+            btn.innerHTML = 'Actualizar Ingreso <span class="material-symbols-outlined text-lg">update</span>';
+            btn.classList.replace('bg-corpGreen', 'bg-indigo-600');
+            btn.classList.replace('hover:bg-corpGreen-hover', 'hover:bg-indigo-700');
+            
+            document.getElementById('btnCancelEditMixer').classList.remove('hidden');
+            
+            item.Fecha_Semana = formatDateForInputDate(item.Fecha_Semana);
+
+            document.getElementById('ID_Ingreso').value = item.ID_Ingreso || "";
+            document.getElementById('Tipo_Mixer').value = item.Tipo || "";
+            document.getElementById('Semana_Mixer').value = item.Semana || "";
+            document.getElementById('Fecha_Semana_Mixer').value = item.Fecha_Semana || "";
+            document.getElementById('Pedido').value = item.Pedido || "";
+            document.getElementById('Guia').value = item.Guia || "";
+            
+            const timeFields = ['Hora_SalidaPlanta', 'Hora_LlegadaObra', 'Hora_InicioVaciado', 'Hora_FinVaciado'];
+            timeFields.forEach(tf => {
+                let timeVal = item[tf];
+                if (timeVal && String(timeVal).includes('T')) {
+                    timeVal = String(timeVal).split('T')[1].substring(0, 5); 
+                }
+                document.getElementById(tf).value = timeVal || "";
+            });
+
+            document.getElementById('Ensayo').value = item.Ensayo || "No";
+            document.getElementById('Id_Probeta').value = item.Id_Probeta || "";
+            
+            let p1 = "", p2 = "";
+            let keyPeriodos = Object.keys(item).find(k => String(k).toLowerCase().includes("periodo"));
+            let textoPeriodos = keyPeriodos ? item[keyPeriodos] : null;
+
+            if (!textoPeriodos) {
+                const llaves = Object.keys(item);
+                if (llaves.length >= 13) {
+                    textoPeriodos = item[llaves[12]];
+                }
+            }
+
+            if (textoPeriodos) {
+                let numeros = String(textoPeriodos).match(/\d+/g);
+                if (numeros && numeros.length > 0) p1 = numeros[0];
+                if (numeros && numeros.length > 1) p2 = numeros[1];
+            }
+            
+            document.getElementById('Periodo_1').value = p1;
+            document.getElementById('Periodo_2').value = p2;
+            
+            toggleEnsayoFields();
+            switchMixerTab('tab-registro-mixer');
+        }
+
+        // ==========================================
+        // LÓGICA DE PROBETAS 
+        // ==========================================
+        function switchProbetaTab(tabId) {
+            document.getElementById('tab-pendientes').classList.remove('active');
+            document.getElementById('tab-registro-probeta').classList.remove('active');
+            document.getElementById('tab-consulta-probeta').classList.remove('active');
+            
+            const btnPen = document.getElementById('btn-tab-pendientes');
+            const btnReg = document.getElementById('btn-tab-registro-probeta');
+            const btnCon = document.getElementById('btn-tab-consulta-probeta');
+            
+            [btnPen, btnReg, btnCon].forEach(btn => {
+                btn.className = "tab-btn-probeta flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-transparent text-slate-500 hover:bg-slate-50";
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            
+            if(tabId === 'tab-pendientes') {
+                btnPen.classList.add('border-amber-500', 'text-amber-600', 'bg-slate-50');
+            } else if(tabId === 'tab-registro-probeta') {
+                btnReg.classList.add('border-indigo-600', 'text-indigo-700', 'bg-slate-50');
+            } else {
+                btnCon.classList.add('border-corpBlue-600', 'text-corpBlue-600', 'bg-slate-50');
+            }
+        }
+
+        function loadPendingProbetas() {
+            const container = document.getElementById('pendingProbetasList');
+            const loading = document.getElementById('loadingProbetas');
+            container.innerHTML = ""; loading.classList.remove('hidden');
+
+            fetch(`${GOOGLE_APP_URL}?action=get_probetas_pendientes`)
+                .then(res => res.json())
+                .then(data => {
+                    loading.classList.add('hidden');
+                    if(data.length === 0) {
+                        container.innerHTML = `<div class="col-span-full text-center text-slate-500 py-8 bg-slate-50 rounded-xl"><span class="material-symbols-outlined text-4xl text-green-400">check_circle</span><p>No hay ensayos pendientes.</p></div>`;
+                        return;
+                    }
+
+                    const cleanDate = (d) => {
+                        if (!d) return "S/F";
+                        let str = String(d);
+                        if (str.includes('T')) {
+                            let p = str.split('T')[0].split('-');
+                            if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+                        }
+                        return str;
+                    };
+
+                    const dateToSortValue = (d) => {
+                        let str = cleanDate(d);
+                        let p = str.split('/');
+                        if (p.length === 3) return parseInt(`${p[2]}${p[1]}${p[0]}`);
+                        return 99999999; 
+                    };
+
+                    data.sort((a, b) => dateToSortValue(a.fechaSemana) - dateToSortValue(b.fechaSemana));
+
+                    data.forEach(item => {
+                        let fechaRoturaLimpia = cleanDate(item.fechaRotura);
+                        let fechaProbetaLimpia = cleanDate(item.fechaSemana);
+
+                        const card = document.createElement('div');
+                        card.className = "bg-white border-l-4 border-amber-500 hover:shadow-md rounded-xl p-4 cursor-pointer transition flex justify-between items-center group";
+                        card.onclick = () => loadProbetaToForm(item, true);
+                        
+                        card.innerHTML = `
+                            <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded uppercase">${item.tipoConcreto}</span>
+                                    <span class="text-xs text-slate-500 font-medium bg-slate-50 px-2 py-0.5 border border-slate-100 rounded">Fecha probeta: <b>${fechaProbetaLimpia}</b></span>
+                                </div>
+                                <h4 class="font-bold text-slate-800 mt-2 text-md flex items-center gap-1">Fecha rotura: ${fechaRoturaLimpia}</h4>
+                                <p class="text-xs text-slate-500 mt-1">Guía: ${item.guia} | Ensayo: ${item.dias} días</p>
+                            </div>
+                            <div class="text-right pl-3 border-l border-slate-100 text-xs text-slate-400 group-hover:text-indigo-600 transition flex flex-col items-center justify-center">
+                                <span class="material-symbols-outlined text-2xl">edit_document</span>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                })
+                .catch(() => {
+                    loading.classList.add('hidden');
+                    container.innerHTML = '<div class="col-span-full text-red-500 text-center py-4 bg-red-50 rounded-xl">Error de conexión.</div>';
+                });
+        }
+
+        function searchProbetasByDate() {
+            const dateStr = document.getElementById('searchDateProbeta').value;
+            if (dateStr.length !== 10) return alert("Formato DD/MM/YYYY");
+            const container = document.getElementById('searchResultsProbeta');
+            const loading = document.getElementById('loadingMsgProbeta');
+            container.innerHTML = ""; loading.classList.remove('hidden');
+
+            fetch(`${GOOGLE_APP_URL}?action=search_probetas&fecha=${encodeURIComponent(dateStr)}`)
+                .then(res => res.json())
+                .then(data => {
+                    loading.classList.add('hidden');
+                    if(data.length === 0) { 
+                        container.innerHTML = `<div class="col-span-full text-center py-8">No se encontraron probetas para esta fecha.</div>`; 
+                        return; 
+                    }
+
+                    const cleanDate = (d) => {
+                        if (!d) return "S/F";
+                        let str = String(d);
+                        if (str.includes('T')) {
+                            let p = str.split('T')[0].split('-');
+                            if (p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+                        }
+                        return str;
+                    };
+
+                    data.forEach(item => {
+                        const isPend = item.Status === "Pendiente" || item.Status === "";
+                        const bColor = isPend ? "border-amber-500" : "border-corpGreen";
+                        const iconColor = isPend ? "text-amber-500" : "text-corpGreen";
+                        
+                        let fechaRoturaLimpia = cleanDate(item.Fecha_Rotura);
+                        
+                        let porcText = "N/A";
+                        if (item.PorResis_Alcan !== "" && item.PorResis_Alcan !== null) {
+                            let rawPorc = parseFloat(item.PorResis_Alcan);
+                            if (!isNaN(rawPorc)) {
+                                porcText = (rawPorc * 100).toFixed(2) + "%";
+                            }
+                        }
+
+                        let linkHTML = "";
+                        if (item.Link && item.Link.trim() !== "") {
+                            linkHTML = `
+                                <a href="${item.Link}" target="_blank" onclick="event.stopPropagation();" class="text-blue-500 hover:text-blue-700 transition flex items-center justify-center p-1 rounded-full hover:bg-blue-50" title="Ver Certificado">
+                                    <span class="material-symbols-outlined text-[20px]">picture_as_pdf</span>
+                                </a>
+                            `;
+                        }
+
+                        const card = document.createElement('div');
+                        card.className = `bg-white border-l-4 ${bColor} hover:shadow-md rounded-xl p-4 cursor-pointer transition flex justify-between items-center group`;
+                        card.onclick = () => loadProbetaToForm(item, false);
+                        
+                        card.innerHTML = `
+                            <div class="flex-grow">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <span class="text-[10px] font-bold bg-slate-100 text-slate-600 px-2 py-0.5 rounded uppercase">${item.Tipo_Concreto} - ${item.Dias_Ensayos} Días</span>
+                                    <span class="text-xs text-slate-500 font-medium bg-slate-50 px-2 py-0.5 border border-slate-100 rounded">ID: <b>${item.Id_Probeta || "S/N"}</b></span>
+                                </div>
+                                <h4 class="font-bold text-slate-800 mt-2 text-md flex items-center gap-1">Fecha rotura: ${fechaRoturaLimpia}</h4>
+                                <p class="text-xs text-slate-500 mt-1">Guía: ${item.Guia} | Status: <span class="font-bold ${iconColor}">${item.Status || "Pendiente"}</span></p>
+                            </div>
+                            
+                            <div class="flex items-center gap-3 pl-3 border-l border-slate-100">
+                                <div class="flex flex-col items-center justify-center min-w-[60px]">
+                                    <span class="text-xs font-bold text-slate-400 mb-0.5">% Alcance</span>
+                                    <span class="text-lg font-black ${iconColor}">${porcText}</span>
+                                </div>
+                                
+                                <div class="flex flex-col gap-2">
+                                    ${linkHTML}
+                                    <div class="text-slate-400 group-hover:text-indigo-600 transition flex items-center justify-center p-1 rounded-full hover:bg-indigo-50">
+                                        <span class="material-symbols-outlined text-[20px]">edit</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        container.appendChild(card);
+                    });
+                })
+                .catch(() => {
+                    loading.classList.add('hidden');
+                    container.innerHTML = '<div class="col-span-full text-red-500 text-center py-4 bg-red-50 rounded-xl">Error de conexión.</div>';
+                });
+        }
+
+        function loadProbetaToForm(item, fromPending) {
+            document.getElementById('probetaForm').reset();
+            
+            if (fromPending) {
+                document.getElementById('Probeta_FilaFisica').value = item.filaFisica;
+                document.getElementById('Probeta_FcBase').value = item.fcBase;
+                document.getElementById('Probeta_ID').value = item.idProbeta || "";
+                document.getElementById('Probeta_Elementos').value = item.elementos || "";
+                
+                document.getElementById('Probeta_FechaRotura').value = formatDateForInputDate(item.fechaRotura);
+                document.getElementById('Probeta_FechaSemana').value = formatDateForInputDate(item.fechaSemana);
+                document.getElementById('Probeta_DiasEnsayos').value = item.dias || "";
+
+                document.getElementById('form-subtitle-probeta').innerText = `Llenando ensayo de ${item.dias} días (Guía: ${item.guia})`;
+            } else {
+                document.getElementById('Probeta_FilaFisica').value = item.filaFisica;
+                document.getElementById('Probeta_FcBase').value = item.Fc_Rotura;
+                document.getElementById('Probeta_ID').value = item.Id_Probeta || "";
+                document.getElementById('Probeta_Elementos').value = item.Elementos_Probeta || "";
+                
+                document.getElementById('Probeta_FechaRotura').value = formatDateForInputDate(item.Fecha_Rotura);
+                document.getElementById('Probeta_FechaSemana').value = formatDateForInputDate(item.Fecha_Semana);
+                document.getElementById('Probeta_DiasEnsayos').value = item.Dias_Ensayos || "";
+
+                document.getElementById('Probeta_P1').value = item.Fc_RoturaP1 || "";
+                document.getElementById('Probeta_P2').value = item.Fc_RoturaP2 || "";
+                document.getElementById('Probeta_P3').value = item.Fc_RoturaP3 || "";
+                document.getElementById('Probeta_Certificado').value = item.Id_Certificado || "";
+                document.getElementById('Probeta_Status').value = item.Status || "Conforme";
+                
+                document.getElementById('form-subtitle-probeta').innerText = `Modificando ensayo de ${item.Dias_Ensayos} días (Guía: ${item.Guia})`;
+                document.getElementById('Probeta_PDF').required = false; 
+            }
+            switchProbetaTab('tab-registro-probeta');
+        }
+
+        const fileToBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader(); reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result.split(',')[1]); reader.onerror = error => reject(error);
+        });
+
+        document.getElementById('probetaForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const submitBtn = document.getElementById('btnSubmitProbeta');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true; submitBtn.innerHTML = 'Guardando... <span class="material-symbols-outlined animate-spin text-lg">refresh</span>';
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            const fileInput = document.getElementById('Probeta_PDF');
+            
+            data.fechaSemana = formatInputDateToSpanish(data.fechaSemana);
+            data.fechaRotura = formatInputDateToSpanish(data.fechaRotura);
+
+            data.pdfBase64 = null;
+            if(fileInput.files.length > 0) data.pdfBase64 = await fileToBase64(fileInput.files[0]);
+
+            fetch(GOOGLE_APP_URL, { method: 'POST', body: JSON.stringify({ module: 'probeta', action: 'update', data: data }) })
+            .then(res => res.json())
+            .then(response => {
+                if(response.status === "success") {
+                    alert("✅ Guardado Exitoso.");
+                    document.getElementById('probetaForm').reset();
+                    switchProbetaTab('tab-pendientes');
+                    loadPendingProbetas(); 
+                } else alert("Error: " + response.message);
+            })
+            .finally(() => { submitBtn.disabled = false; submitBtn.innerHTML = originalText; });
+        });
+    </script>
+</body>
+</html>

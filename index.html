@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Control de Obra - Index Corp</title>
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              corpBlue: {
+                50: '#ebf0f5',
+                100: '#d1dee8',
+                300: '#7aa3c2',
+                500: '#336a94',
+                600: '#233D5C', /* TU AZUL PRINCIPAL */
+                700: '#1c314a', /* Azul oscuro para efectos Hover */
+                800: '#142538',
+              },
+              corpGreen: {
+                DEFAULT: '#85B648', /* TU VERDE PRINCIPAL */
+                hover: '#719e3a'    /* Verde oscuro para efectos Hover */
+              }
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- Google Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <style>
+        /* Pequeño ajuste para los acordeones del menú lateral */
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans overflow-x-hidden min-h-screen flex flex-col">
+
+    <!-- BLOQUE 1: LOGIN -->
+    <div id="bloque-login" class="flex items-center justify-center flex-grow p-4">
+        <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-sm text-center">
+            <img src="./Logo_Haelservice.png" alt="Logo Empresa" class="h-16 w-auto mx-auto mb-4 object-contain">
+            <h2 class="text-2xl font-bold text-slate-800 mb-1">Iniciar Sesión</h2>
+            <p class="text-xs text-slate-500 mb-6">Portal de Control y Gestión</p>
+            
+            <div class="mb-4 text-left">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Usuario o Correo</label>
+                <input type="text" id="user-input" placeholder="csuarez" class="w-full p-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 focus:border-corpBlue-500 outline-none transition">
+            </div>
+            <div class="mb-4 text-left">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+                <input type="password" id="pass-input" placeholder="********" class="w-full p-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 focus:border-corpBlue-500 outline-none transition">
+            </div>
+            
+            <div class="flex items-center mb-6 text-sm text-slate-600">
+                <input type="checkbox" id="recordar" class="mr-2 w-4 h-4 text-corpBlue-500 rounded border-slate-300 focus:ring-corpBlue-500">
+                <label for="recordar">Recordar sesión</label>
+            </div>
+
+            <button id="btn-login" onclick="iniciarSesion()" class="w-full bg-corpGreen hover:bg-corpGreen-hover text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 transition shadow-sm">
+                Ingresar <span class="material-symbols-outlined text-lg">login</span>
+            </button>
+            <p class="text-[11px] text-slate-400 mt-6">© 2026 Index Corp</p>
+        </div>
+    </div>
+
+    <!-- NAVBAR GLOBAL -->
+    <nav id="navbar-global" class="hidden bg-corpBlue-600 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-40 shadow-md">
+        <!-- AFTER -->
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="hover:bg-corpBlue-500 p-1 rounded transition flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">menu</span>
+            </button>
+            <span id="nav-title" class="text-lg font-bold">Mis Proyectos</span>
+        </div>
+        <div class="relative">
+            <button onclick="toggleUserMenu()" id="nav-user-initials" class="w-9 h-9 bg-corpBlue-50 text-corpBlue-600 rounded-full font-bold flex items-center justify-center hover:bg-white transition shadow-sm">
+                --
+            </button>
+            <!-- Dropdown Menú Usuario -->
+            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden z-50">
+                <div class="px-4 py-3 border-b border-slate-100">
+                    <p id="dropdown-user-name" class="text-sm font-bold text-slate-800">Usuario</p>
+                    <p id="dropdown-user-rol" class="text-xs text-slate-500 truncate">Rol</p>
+                </div>
+                <!-- 1. Enlace a Mi Perfil -->
+                <a href="perfil.html" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition">
+                    <span class="material-symbols-outlined text-[20px]">person</span> Mi Perfil
+                </a>
+                <!-- 2. Enlace a WhatsApp (Soporte) -->
+                <a href="https://wa.me/51922442738" target="_blank" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition">
+                    <span class="material-symbols-outlined text-[20px]">help</span> Soporte
+                </a>
+                <div class="border-t border-slate-100"></div>
+                <!-- 3. Botón Cerrar Sesión -->
+                <button onclick="cerrarSesion()" class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition font-medium">
+                    <span class="material-symbols-outlined text-[20px]">logout</span> Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SIDEBAR (Menú Lateral Desplegable) -->
+    <!-- SIDEBAR (Menú Lateral Desplegable) -->
+    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-slate-900/50 z-40 transition-opacity" onclick="toggleSidebar()"></div>
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
+
+        <!-- Bloque del Logo en el Sidebar -->
+        <div class="p-6 flex items-center justify-center border-b border-slate-100 bg-slate-50 h-24">
+            <img src="./Logo_Haelservice.png" alt="Logo Empresa" class="h-12 w-auto object-contain">
+        </div>
+
+        <div class="p-4 flex-grow overflow-y-auto mt-4">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Navegación</p>
+            <button onclick="volverAProyectos(); toggleSidebar();" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-corpBlue-600 bg-corpBlue-50 rounded-lg transition mb-6">
+                <span class="material-symbols-outlined">business_center</span> Mis Proyectos
+            </button>
+        </div>
+    </aside>
+
+    <!-- BLOQUE 2: MIS PROYECTOS -->
+    <main id="bloque-proyectos" class="hidden flex-grow p-4 md:p-6 max-w-7xl mx-auto w-full">
+        <div class="flex items-center gap-3 mb-6">
+            <span class="material-symbols-outlined text-3xl text-corpBlue-600">business_center</span>
+            <h1 class="text-2xl font-bold text-slate-800">Mis Proyectos</h1>
+        </div>
+
+        <!-- CONTENEDOR DINÁMICO DE PROYECTOS -->
+        <div id="contenedor-proyectos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Las tarjetas se inyectarán aquí mediante JS -->
+        </div>
+    </main>
+
+    <!-- BLOQUE 3: PANEL DE APPS POR PROYECTO -->
+    <main id="bloque-apps" class="hidden flex-grow p-4 md:p-6 max-w-7xl mx-auto w-full">
+        <div class="flex items-center gap-4 mb-8">
+            <button onclick="volverAProyectos()" class="w-10 h-10 bg-white border border-slate-200 text-slate-600 hover:text-corpBlue-600 hover:border-teal-300 rounded-full flex items-center justify-center transition shadow-sm">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800 leading-tight">Panel de Aplicaciones</h1>
+                <p class="text-sm text-slate-500 mt-1">Proyecto: <strong id="nombre-proyecto-apps" class="text-corpBlue-600"></strong></p>
+            </div>
+        </div>
+        
+        <!-- CONTENEDOR DINÁMICO DE APPS -->
+        <div id="contenedor-apps" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <!-- Los microservicios se inyectarán aquí mediante JS -->
+        </div>
+    </main>
+
+    <!-- SCRIPT DE CONEXIÓN CON APPS SCRIPT (GITHUB PAGES) -->
+    <script>
+        // ⚠️ IMPORTANTE: REEMPLAZA ESTA URL POR LA TUYA QUE TERMINA EN /exec
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxDwiv5AWFv2JAvbXPIBqvNtTQPB5XjNA2QP-2bkrcunhdvoIx9Jxp_ixvDdjewhv2u/exec'; 
+        
+        let usuarioActual = null;
+
+        // --- MANEJO DE CACHÉ AL CARGAR LA PÁGINA ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedUser = localStorage.getItem('indexCorp_user');
+            const savedPass = localStorage.getItem('indexCorp_pass');
+            
+            if(savedUser && savedPass) {
+                document.getElementById('user-input').value = savedUser;
+                document.getElementById('pass-input').value = savedPass;
+                document.getElementById('recordar').checked = true;
+            }
+        });
+
+        // --- FUNCIÓN CENTRALIZADA PARA HABLAR CON LA BASE DE DATOS ---
+        async function fetchAPI(payload) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=utf-8',
+                    },
+                    body: JSON.stringify(payload)
+                });
+                return await response.json();
+            } catch (error) {
+                console.error("Error en fetchAPI:", error);
+                return { success: false, message: "Error de red al conectar con el servidor." };
+            }
+        }
+
+        // --- 1. LÓGICA DE LOGIN ---
+        async function iniciarSesion() {
+            const usuario = document.getElementById('user-input').value.trim();
+            const pass = document.getElementById('pass-input').value.trim();
+            const recordar = document.getElementById('recordar').checked;
+            const btn = document.getElementById('btn-login');
+            
+            if(!usuario || !pass) {
+                alert("Por favor, ingresa tu usuario y contraseña.");
+                return;
+            }
+
+            // Cambiar estado del botón
+            btn.innerHTML = 'Cargando... <span class="material-symbols-outlined text-lg animate-spin">refresh</span>';
+            btn.disabled = true;
+
+            // Petición POST a tu API
+            const respuesta = await fetchAPI({ 
+                action: "login", 
+                usuario: usuario, 
+                password: pass 
+            });
+
+            if (respuesta.success) {
+                // Gestionar el caché si fue exitoso
+                if(recordar) {
+                    localStorage.setItem('indexCorp_user', usuario);
+                    localStorage.setItem('indexCorp_pass', pass);
+                } else {
+                    localStorage.removeItem('indexCorp_user');
+                    localStorage.removeItem('indexCorp_pass');
+                }
+
+                usuarioActual = respuesta.user;
+                const iniciales = usuarioActual.nombre.substring(0, 2).toUpperCase();
+                
+                // Actualizar UI con datos del usuario
+                document.getElementById('nav-user-initials').innerText = iniciales;
+                document.getElementById('dropdown-user-name').innerText = usuarioActual.nombre;
+                document.getElementById('dropdown-user-rol').innerText = "Rol: " + usuarioActual.rol;
+                
+                // Transición de pantallas
+                document.getElementById('bloque-login').classList.add('hidden');
+                document.getElementById('navbar-global').classList.remove('hidden');
+                document.getElementById('bloque-proyectos').classList.remove('hidden');
+                
+                // Cargar proyectos dinámicamente
+                cargarProyectos();
+            } else {
+                alert(respuesta.message);
+                btn.innerHTML = 'Ingresar <span class="material-symbols-outlined text-lg">login</span>';
+                btn.disabled = false;
+            }
+        }
+
+        // --- 2. CARGAR PROYECTOS ---
+        async function cargarProyectos() {
+            const contenedor = document.getElementById('contenedor-proyectos');
+            contenedor.innerHTML = '<div class="col-span-full flex items-center gap-2 text-slate-500"><span class="material-symbols-outlined animate-spin">refresh</span> Cargando Mis Proyectos...</div>';
+            
+            const respuesta = await fetchAPI({ 
+                action: "getProyectos", 
+                proyectosPermitidos: usuarioActual.proyectos 
+            });
+            
+            if(respuesta.success) {
+                let html = '';
+                if(respuesta.data.length === 0) {
+                    html = '<p class="text-slate-500 col-span-full">No tienes proyectos activos asignados.</p>';
+                } else {
+                    respuesta.data.forEach(p => {
+                        const badgeColor = p.estado === 'ACTIVO' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
+                        const badgeIcon = p.estado === 'ACTIVO' ? 'check_circle' : 'pending';
+
+                        html += `
+                        <div class="bg-white rounded-xl p-5 shadow-sm border border-slate-200 hover:shadow-md transition-shadow group flex flex-col">
+                            <div class="flex justify-between items-start mb-4">
+                                <span class="bg-slate-100 text-slate-600 text-xs font-bold px-2.5 py-1 rounded-md">${p.id}</span>
+                                <span class="${badgeColor} text-[11px] font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                                    <span class="material-symbols-outlined text-[14px]">${badgeIcon}</span> ${p.estado}
+                                </span>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-800 mb-1">${p.nombre}</h3>
+                            <p class="text-sm text-slate-500 flex items-center gap-1 mb-6 flex-grow">
+                                <span class="material-symbols-outlined text-[16px]">location_on</span> ${p.ubicacion}
+                            </p>
+                            <button onclick="abrirProyecto('${p.id}', '${p.nombre}')" class="w-full bg-slate-50 hover:bg-corpBlue-50 text-corpBlue-600 border border-slate-200 hover:border-teal-200 font-bold py-2 rounded-lg transition flex justify-center items-center gap-2 text-sm">
+                                <span class="material-symbols-outlined text-[18px]">apps</span> Ver Aplicaciones
+                            </button>
+                        </div>`;
+                    });
+                }
+                contenedor.innerHTML = html;
+            } else {
+                contenedor.innerHTML = `<p class="text-red-500 col-span-full">Error: ${respuesta.message}</p>`;
+            }
+        }
+
+        // --- 3. CARGAR APPS POR PROYECTO ---
+        async function abrirProyecto(idProyecto, nombreProyecto) {
+            document.getElementById('bloque-proyectos').classList.add('hidden');
+            document.getElementById('bloque-apps').classList.remove('hidden');
+            document.getElementById('nombre-proyecto-apps').innerText = `[${idProyecto}] ${nombreProyecto}`;
+            document.getElementById('nav-title').innerText = 'Aplicaciones';
+            
+            const contenedor = document.getElementById('contenedor-apps');
+            contenedor.innerHTML = '<div class="col-span-full flex items-center gap-2 text-slate-500"><span class="material-symbols-outlined animate-spin">refresh</span> Consultando aplicaciones...</div>';
+
+            // Petición POST a tu API (ahora más limpia)
+            const respuesta = await fetchAPI({ 
+                action: "getApps", 
+                idProyecto: idProyecto 
+            });
+            
+            if(respuesta.success) {
+                let html = '';
+                if(respuesta.data.length === 0) {
+                    html = '<p class="text-slate-500 col-span-full w-full">No hay aplicaciones habilitadas para este proyecto o no cuentas con los permisos necesarios.</p>';
+                } else {
+                    respuesta.data.forEach(a => {
+                        html += `
+                        <button onclick="abrirApp('${a.archivoHtml}', '${a.url}')" class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md hover:border-teal-300 transition-all flex flex-col items-center text-center group w-full">
+                            <div class="w-16 h-16 bg-corpBlue-50 text-corpBlue-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-corpBlue-500 group-hover:text-white transition-colors">
+                                <span class="material-symbols-outlined text-3xl">${a.icono}</span>
+                            </div>
+                            <h3 class="font-bold text-slate-800 text-sm md:text-base mb-1">${a.nombre}</h3>
+                            <p class="text-xs text-slate-500">${a.categoria}</p>
+                        </button>`;
+                    });
+                }
+                contenedor.innerHTML = html;
+            } else {
+                contenedor.innerHTML = `<p class="text-red-500 col-span-full">Error: ${respuesta.message}</p>`;
+            }
+        }
+
+        // --- NAVEGACIÓN Y MENÚS BÁSICOS ---
+        function volverAProyectos() {
+            document.getElementById('bloque-apps').classList.add('hidden');
+            document.getElementById('bloque-proyectos').classList.remove('hidden');
+            document.getElementById('nav-title').innerText = 'Mis Proyectos';
+        }
+
+        // Función para Cerrar Sesión sin recargar la página
+        function cerrarSesion() {
+            // 1. Ocultar el menú de usuario que quedó abierto
+            document.getElementById('user-menu').classList.add('hidden');
+
+            // 2. Limpiar la variable de seguridad
+            usuarioActual = null;
+            
+            // 3. Limpiar los contenedores
+            document.getElementById('contenedor-proyectos').innerHTML = '';
+            document.getElementById('contenedor-apps').innerHTML = '';
+            
+            // (Opcional) Si no quieres que recuerde la contraseña al cerrar sesión, descomenta la siguiente línea:
+            // document.getElementById('pass-input').value = ''; 
+
+            // 4. Restaurar el estado del botón de login
+            const btnLogin = document.getElementById('btn-login');
+            btnLogin.innerHTML = 'Ingresar <span class="material-symbols-outlined text-lg">login</span>';
+            btnLogin.disabled = false;
+
+            // 5. Ocultar las vistas de la aplicación
+            document.getElementById('navbar-global').classList.add('hidden');
+            document.getElementById('bloque-proyectos').classList.add('hidden');
+            document.getElementById('bloque-apps').classList.add('hidden');
+            
+            // 6. Mostrar nuevamente la pantalla de Login
+            document.getElementById('bloque-login').classList.remove('hidden');
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.remove('-translate-x-full');
+                sidebar.classList.add('translate-x-0');
+                overlay.classList.remove('hidden');
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                sidebar.classList.remove('translate-x-0');
+                overlay.classList.add('hidden');
+            }
+        }
+
+        function toggleUserMenu() {
+            const menu = document.getElementById('user-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.closest('.relative')) {
+                const menu = document.getElementById('user-menu');
+                if (menu && !menu.classList.contains('hidden')) {
+                    menu.classList.add('hidden');
+                }
+            }
+        }
+
+        // --- ENRUTAMIENTO DINÁMICO DEFINITIVO ---
+        function abrirApp(archivoHtml, apiUrl) {
+            if (!archivoHtml || archivoHtml === "undefined") {
+                alert("Error: El archivo HTML de esta aplicación no está definido en el catálogo (Apps_Maestro).");
+                return;
+            }
+            // Abre el archivo exacto (ej. control_concreto.html) y le pega la URL del Sheet del proyecto
+            window.location.href = archivoHtml + "?api=" + encodeURIComponent(apiUrl);
+        }
+    </script>
+</body>
+</html>
