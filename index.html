@@ -312,7 +312,7 @@
                 } else {
                     respuesta.data.forEach(a => {
                         html += `
-                        <button onclick="abrirApp('${a.archivoHtml}', '${a.url}')" class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md hover:border-teal-300 transition-all flex flex-col items-center text-center group w-full">
+                        <button onclick="abrirApp('${a.archivoHtml}', '${a.url}', '${nombreProyecto}')" class="bg-white rounded-xl p-6 shadow-sm border border-slate-200 hover:shadow-md hover:border-teal-300 transition-all flex flex-col items-center text-center group w-full">
                             <div class="w-16 h-16 bg-corpBlue-50 text-corpBlue-600 rounded-full flex items-center justify-center mb-4 group-hover:bg-corpBlue-500 group-hover:text-white transition-colors">
                                 <span class="material-symbols-outlined text-3xl">${a.icono}</span>
                             </div>
@@ -393,13 +393,13 @@
         }
 
         // --- ENRUTAMIENTO DINÁMICO DEFINITIVO ---
-        function abrirApp(archivoHtml, apiUrl) {
+        function abrirApp(archivoHtml, apiUrl, nombreProyecto) {
             if (!archivoHtml || archivoHtml === "undefined") {
                 alert("Error: El archivo HTML de esta aplicación no está definido en el catálogo (Apps_Maestro).");
                 return;
             }
-            // Abre el archivo exacto (ej. control_concreto.html) y le pega la URL del Sheet del proyecto
-            window.location.href = archivoHtml + "?api=" + encodeURIComponent(apiUrl);
+            // AHORA SÍ: Agrega tanto la API como el nombre del proyecto a la URL
+            window.location.href = archivoHtml + "?api=" + encodeURIComponent(apiUrl) + "&projectId=" + encodeURIComponent(nombreProyecto);
         }
     </script>
 </body>

@@ -41,7 +41,7 @@
                 <span class="material-symbols-outlined text-2xl">menu</span>
             </button>
             <span class="text-lg font-bold flex items-center gap-2">
-                <span class="material-symbols-outlined">add_a_photo</span> Cámara de Obra
+                <span class="material-symbols-outlined">add_a_photo</span> Registro Fotográfico
             </span>
         </div>
         
@@ -71,11 +71,14 @@
     <div id="sidebar-overlay" class="hidden fixed inset-0 bg-slate-900/50 z-40 transition-opacity" onclick="toggleSidebar()"></div>
     <aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
         <div class="p-6 flex flex-col items-center justify-center border-b border-slate-100 bg-slate-50 h-32">
-            <img src="./Logo_Haelservice.png" alt="Logo Empresa" class="h-10 w-auto object-contain mb-3" onerror="this.style.display='none'">
-            <h2 class="font-bold text-slate-800 text-lg">Cámara de Obra</h2>
-            <h3 id="sidebar-project-name" class="text-xs font-bold text-slate-500 uppercase tracking-wide">Cargando Proyecto...</h3>
+            <img src="./Logo_Haelservice.png" alt="Logo Empresa" class="h-10 w-auto object-contain mb-3">
+            <h2 class="font-bold text-slate-800 text-lg flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">add_a_photo</span> Registro Fotográfico
+            </h2>
+            <h3 id="sidebar-project-name" class="text-xs font-bold text-slate-500 uppercase tracking-wide text-center mt-1">Cargando Proyecto...</h3>
         </div>
         <div class="p-4 flex-grow overflow-y-auto mt-2">
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Navegación</p>
             <a href="index.html" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-corpBlue-600 bg-corpBlue-50 hover:bg-corpBlue-100 rounded-lg transition mb-2">
                 <span class="material-symbols-outlined">business_center</span> Mis Proyectos
             </a>
@@ -187,33 +190,80 @@
 
         let nombreProyectoData = "Cargando nombre...";
 
+        // Función clonada exactamente de reporte_diario
+        async function fetchAPI(action, dataPayload = {}) {
+            try {
+                const response = await fetch(GOOGLE_APP_URL, { 
+                    method: 'POST', 
+                    body: JSON.stringify({ action: action, data: dataPayload }) 
+                });
+                return await response.json();
+            } catch (error) { 
+                return { success: false, message: "Error de red." }; 
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", async () => {
+            // Validación de seguridad idéntica a tus otras apps
+            if (!GOOGLE_APP_URL) {
+                alert("⚠️ Acceso denegado. Redirigiendo al portal.");
+                window.location.href = "index.html"; return;
+            }
             const savedUser = localStorage.getItem('indexCorp_user');
             if(savedUser) {
                 document.getElementById('nav-user-initials').innerText = savedUser.substring(0, 2).toUpperCase();
                 document.getElementById('dropdown-user-name').innerText = "Usuario: " + savedUser;
             }
-            document.getElementById('sidebar-project-name').innerText = PROJECT_ID;
-            
-            // Setear la fecha actual por defecto
+
+            // Setear la fecha de hoy
             document.getElementById('fechaRegistro').value = new Date().toISOString().split('T')[0];
-            
-            // Cargar Configuración (Nombre del proyecto) desde el nuevo Backend
-            try {
-                const res = await fetch(`${GOOGLE_APP_URL}?action=get_config`); 
-                if(res.ok) {
-                   const config = await res.json();
-                   if(config && config.Nombre_Proyecto) {
-                       nombreProyectoData = config.Nombre_Proyecto;
-                   } else {
-                       nombreProyectoData = PROJECT_ID;
-                   }
-                }
-            } catch (e) {
-                console.log("Error cargando configuración, usando ID.");
-                nombreProyectoData = PROJECT_ID;
-            }
+
+            // Llamada asíncrona a la función separada para manejar la carga visual
+            await cargarConfiguracion();
         });
+
+        // NUEVA FUNCIÓN: Maneja la carga visual y la petición al backend
+        async function cargarConfiguracion() {
+            const sidebarProjName = document.getElementById('sidebar-project-name');
+            
+            // 1. Mostrar estado de carga (mantiene el texto del HTML)
+            if (sidebarProjName) {
+                sidebarProjName.innerText = "Cargando Proyecto...";
+            }
+
+            try {
+                // 2. Hacer la petición a la base de datos
+                const res = await fetchAPI("get_config");
+                
+                if (res.success) {
+                    // Validamos las dos posibles estructuras de respuesta del backend
+                    let nombreOficial = null;
+                    if (res.data && res.data.Nombre_Proyecto) {
+                        nombreOficial = res.data.Nombre_Proyecto;
+                    } else if (res.Nombre_Proyecto) {
+                        nombreOficial = res.Nombre_Proyecto; // Fallback por si la estructura cambia
+                    }
+
+                    // 3. Actualizar la interfaz con el resultado
+                    if (nombreOficial) {
+                        nombreProyectoData = nombreOficial;
+                        if (sidebarProjName) sidebarProjName.innerText = nombreOficial;
+                    } else {
+                        nombreProyectoData = PROJECT_ID;
+                        if (sidebarProjName) sidebarProjName.innerText = PROJECT_ID;
+                    }
+                } else {
+                    // Si la petición falla lógicamente, mostramos el ID
+                    nombreProyectoData = PROJECT_ID;
+                    if (sidebarProjName) sidebarProjName.innerText = PROJECT_ID;
+                }
+            } catch (error) {
+                // Si hay un error de red, mostramos el ID
+                console.error("Error al cargar la configuración:", error);
+                nombreProyectoData = PROJECT_ID;
+                if (sidebarProjName) sidebarProjName.innerText = PROJECT_ID;
+            }
+        }
 
         // =====================================
         // LÓGICA DE FOTOS MÚLTIPLES Y CANVAS
