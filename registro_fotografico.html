@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Registro Fotográfico</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              corpBlue: { 50: '#ebf0f5', 100: '#d1dee8', 300: '#7aa3c2', 500: '#336a94', 600: '#233D5C', 700: '#1c314a', 800: '#142538' },
+              corpGreen: { DEFAULT: '#85B648', hover: '#719e3a' }
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <style>
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        
+        .toggle-checkbox { right: 1.5rem; z-index: 1; border-color: #e2e8f0; transition: all 0.3s; }
+        .toggle-checkbox:checked { right: 0; border-color: #85B648; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #85B648; }
+        .toggle-label { width: 3rem; height: 1.5rem; background-color: #cbd5e1; border-radius: 9999px; transition: all 0.3s; }
+        
+        input[type=date]::-webkit-calendar-picker-indicator { cursor: pointer; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- BARRA SUPERIOR -->
+    <nav id="navbar-global" class="bg-corpBlue-600 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-40 shadow-md">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="hover:bg-corpBlue-500 p-1 rounded transition flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">menu</span>
+            </button>
+            <span class="text-lg font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined">add_a_photo</span> Cámara de Obra
+            </span>
+        </div>
+        
+        <div class="relative flex items-center gap-3">
+            <a href="index.html" class="hidden md:flex items-center gap-2 bg-corpBlue-700 hover:bg-corpBlue-800 px-3 py-1.5 rounded-lg text-sm font-bold transition border border-corpBlue-500">
+                <span class="material-symbols-outlined text-[18px]">arrow_back</span> Portal
+            </a>
+            <button onclick="toggleUserMenu()" id="nav-user-initials" class="w-9 h-9 bg-corpBlue-50 text-corpBlue-600 rounded-full font-bold flex items-center justify-center hover:bg-white transition shadow-sm">
+                --
+            </button>
+            <div id="user-menu" class="hidden absolute right-0 top-12 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden z-50">
+                <div class="px-4 py-3 border-b border-slate-100">
+                    <p id="dropdown-user-name" class="text-sm font-bold text-slate-800">Cargando...</p>
+                </div>
+                <a href="https://wa.me/51922442738" target="_blank" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition">
+                    <span class="material-symbols-outlined text-[20px]">help</span> Soporte
+                </a>
+                <div class="border-t border-slate-100"></div>
+                <a href="index.html?logout=true" class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition font-medium">
+                    <span class="material-symbols-outlined text-[20px]">logout</span> Cerrar Sesión
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-slate-900/50 z-40 transition-opacity" onclick="toggleSidebar()"></div>
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
+        <div class="p-6 flex flex-col items-center justify-center border-b border-slate-100 bg-slate-50 h-32">
+            <img src="./Logo_Haelservice.png" alt="Logo Empresa" class="h-10 w-auto object-contain mb-3" onerror="this.style.display='none'">
+            <h2 class="font-bold text-slate-800 text-lg">Cámara de Obra</h2>
+            <h3 id="sidebar-project-name" class="text-xs font-bold text-slate-500 uppercase tracking-wide">Cargando Proyecto...</h3>
+        </div>
+        <div class="p-4 flex-grow overflow-y-auto mt-2">
+            <a href="index.html" class="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-bold text-corpBlue-600 bg-corpBlue-50 hover:bg-corpBlue-100 rounded-lg transition mb-2">
+                <span class="material-symbols-outlined">business_center</span> Mis Proyectos
+            </a>
+        </div>
+    </aside>
+
+    <!-- CONTENIDO PRINCIPAL: CÁMARA -->
+    <main class="flex-grow p-4 flex flex-col items-center w-full max-w-lg mx-auto fade-in">
+        
+        <div class="w-full bg-white p-5 rounded-2xl shadow-md border border-slate-200">
+            
+            <div class="text-center mb-4">
+                <h2 class="text-xl font-bold text-slate-800">Registro Fotográfico</h2>
+                <p class="text-xs text-slate-500 mt-1">Toma fotos o súbelas desde tu galería para procesarlas.</p>
+            </div>
+
+            <!-- Panel de Fecha -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-bold text-slate-600">Fecha del Registro</span>
+                </div>
+                <input type="date" id="fechaRegistro" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:ring-2 focus:ring-corpBlue-500 text-slate-700 font-semibold shadow-sm bg-white">
+            </div>
+
+            <!-- Panel de Controles -->
+            <div class="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-4">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-sm font-bold text-slate-600">Opciones de Guardado</span>
+                </div>
+                
+                <!-- Toggle de Guardado Local -->
+                <div class="flex items-center justify-between">
+                    <div class="flex flex-col">
+                        <span class="text-sm font-semibold text-slate-800">Descarga Local</span>
+                        <span class="text-xs text-slate-500">Guardar copia en el dispositivo</span>
+                    </div>
+                    <div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+                        <input type="checkbox" name="toggle" id="toggleLocal" class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
+                        <label for="toggleLocal" class="toggle-label block overflow-hidden h-6 rounded-full bg-gray-300 cursor-pointer"></label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="statusText" class="text-xs text-slate-500 font-bold mb-4 min-h-[20px] text-center">
+                <span class="flex items-center justify-center gap-2 text-amber-600">
+                    <span class="material-symbols-outlined text-[16px] animate-pulse">location_searching</span> Obteniendo ubicación GPS...
+                </span>
+            </div>
+
+            <!-- Inputs invisibles -->
+            <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="procesarFotoMultiple(event)">
+            <input type="file" id="galleryInput" accept="image/*" multiple class="hidden" onchange="procesarFotoMultiple(event)">
+            
+            <!-- Botones de Acción -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <button onclick="document.getElementById('cameraInput').click()" class="bg-corpBlue-600 hover:bg-corpBlue-700 text-white font-bold py-3 rounded-xl flex flex-col justify-center items-center gap-1 transition shadow-sm">
+                    <span class="material-symbols-outlined text-2xl">photo_camera</span>
+                    <span class="text-xs">Tomar Foto</span>
+                </button>
+                <button onclick="document.getElementById('galleryInput').click()" class="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-3 rounded-xl flex flex-col justify-center items-center gap-1 transition shadow-sm">
+                    <span class="material-symbols-outlined text-2xl">photo_library</span>
+                    <span class="text-xs">Subir Galería</span>
+                </button>
+            </div>
+
+            <!-- Canvas Invisible para procesamiento -->
+            <canvas id="photoCanvas" class="hidden"></canvas>
+
+            <!-- Elemento Image invisible para cargar el logo -->
+            <img id="logoImage" src="./Logo_Haelservice.png" class="hidden" alt="Logo">
+
+            <!-- ZONA DE SUBIDA Y GALERÍA VERTICAL -->
+            <div id="zonaSubida" class="hidden flex-col gap-4 mt-2 pt-4 border-t border-slate-100">
+                
+                <div class="flex justify-between items-center">
+                    <h3 class="text-sm font-bold text-slate-700">Fotos listas para subir (Máx. 6 fotos por carga):</h3>
+                    <span id="contadorFotos" class="text-xs font-black bg-corpBlue-100 text-corpBlue-700 px-2 py-1 rounded-md">0</span>
+                </div>
+
+                <!-- Botón de Envío Masivo -->
+                <button id="btnGuardarMasivo" onclick="guardarYEnviarLote()" class="w-full bg-corpGreen hover:bg-corpGreen-hover text-white font-black py-4 rounded-xl flex justify-center items-center gap-2 transition shadow-md">
+                    <span class="material-symbols-outlined">cloud_upload</span> <span id="textoBtnGuardar">Subir Fotos</span>
+                </button>
+
+                <!-- Galería Previa de Fotos -->
+                <div id="galeriaScroll" class="grid grid-cols-2 gap-3 max-h-[50vh] overflow-y-auto p-2 bg-slate-50 border border-slate-200 rounded-xl">
+                    <!-- Las miniaturas se inyectarán aquí -->
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- SCRIPTS -->
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        const GOOGLE_APP_URL = urlParams.get('api');
+        const PROJECT_ID = urlParams.get('projectId') || "PROYECTO SIN ASIGNAR";
+
+        if (!GOOGLE_APP_URL) {
+            alert("⚠️ Acceso denegado o sesión no iniciada.");
+            window.location.href = "index.html"; 
+        }
+
+        // Funciones de Interfaz
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('sidebar').classList.toggle('translate-x-0'); document.getElementById('sidebar-overlay').classList.toggle('hidden'); }
+        function toggleUserMenu() { document.getElementById('user-menu').classList.toggle('hidden'); }
+        window.onclick = e => { if (!e.target.closest('.relative')) document.getElementById('user-menu')?.classList.add('hidden'); };
+
+        let nombreProyectoData = "Cargando nombre...";
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const savedUser = localStorage.getItem('indexCorp_user');
+            if(savedUser) {
+                document.getElementById('nav-user-initials').innerText = savedUser.substring(0, 2).toUpperCase();
+                document.getElementById('dropdown-user-name').innerText = "Usuario: " + savedUser;
+            }
+            document.getElementById('sidebar-project-name').innerText = PROJECT_ID;
+            
+            // Setear la fecha actual por defecto
+            document.getElementById('fechaRegistro').value = new Date().toISOString().split('T')[0];
+            
+            // Cargar Configuración (Nombre del proyecto) desde el nuevo Backend
+            try {
+                const res = await fetch(`${GOOGLE_APP_URL}?action=get_config`); 
+                if(res.ok) {
+                   const config = await res.json();
+                   if(config && config.Nombre_Proyecto) {
+                       nombreProyectoData = config.Nombre_Proyecto;
+                   } else {
+                       nombreProyectoData = PROJECT_ID;
+                   }
+                }
+            } catch (e) {
+                console.log("Error cargando configuración, usando ID.");
+                nombreProyectoData = PROJECT_ID;
+            }
+        });
+
+        // =====================================
+        // LÓGICA DE FOTOS MÚLTIPLES Y CANVAS
+        // =====================================
+        let canvas = document.getElementById('photoCanvas');
+        let ctx = canvas.getContext('2d');
+        let fotosLote = []; 
+        let ubicacionGPS = "-0.00000, -0.00000";
+
+        navigator.geolocation.getCurrentPosition(
+            (pos) => { 
+                ubicacionGPS = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`; 
+                document.getElementById('statusText').innerHTML = `<span class="text-green-600 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">location_on</span> Ubicación detectada</span>`;
+            },
+            (err) => { 
+                document.getElementById('statusText').innerHTML = `<span class="text-red-500 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">location_off</span> Ubicación no disponible</span>`;
+            },
+            { enableHighAccuracy: true }
+        );
+
+        async function procesarFotoMultiple(event) {
+            const files = event.target.files;
+            if (!files || files.length === 0) return;
+
+            document.getElementById('statusText').innerHTML = `<span class="text-corpBlue-600 flex items-center justify-center gap-1"><span class="material-symbols-outlined animate-spin text-[16px]">refresh</span> Procesando marca(s) de agua...</span>`;
+            
+            for (let i = 0; i < files.length; i++) {
+                await procesarUnaFoto(files[i]);
+            }
+            
+            document.getElementById('statusText').innerHTML = `<span class="text-green-600 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">check_circle</span> Fotos procesadas</span>`;
+            
+            document.getElementById('cameraInput').value = "";
+            document.getElementById('galleryInput').value = "";
+        }
+
+        function procesarUnaFoto(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        
+                        ctx.drawImage(img, 0, 0);
+
+                        const fontSize = Math.max(12, Math.floor(img.height * 0.02)); 
+                        
+                        const logoImg = document.getElementById('logoImage');
+                        let logoHeight = img.height * 0.06; 
+                        let logoWidth = 0;
+                        let logoX = img.width * 0.03;
+                        
+                        const interlineado = fontSize * 1.5; 
+                        const bloqueTextoHeight = interlineado * 4;
+                        
+                        let logoY = img.height - (bloqueTextoHeight + logoHeight + (img.height * 0.04));
+
+                        if(logoImg.complete && logoImg.naturalHeight !== 0) {
+                             const aspectRatio = logoImg.naturalWidth / logoImg.naturalHeight;
+                             logoWidth = logoHeight * aspectRatio;
+                             ctx.drawImage(logoImg, logoX, logoY, logoWidth, logoHeight);
+                        }
+                        
+                        ctx.font = `${fontSize}px sans-serif`; 
+                        ctx.fillStyle = "white";
+                        ctx.shadowColor = "rgba(0, 0, 0, 0.8)";
+                        ctx.shadowBlur = 4;
+                        ctx.shadowOffsetX = 1;
+                        ctx.shadowOffsetY = 1;
+                        
+                        const textX = logoX;
+                        let textY = logoY + logoHeight + (interlineado * 0.8); 
+
+                        ctx.fillText("Haelservice", textX, textY);
+                        textY += interlineado;
+                        
+                        ctx.fillText(nombreProyectoData.substring(0, 40), textX, textY);
+                        textY += interlineado;
+                        
+                        // Formateamos la fecha del input (YYYY-MM-DD a DD.MM.YYYY)
+                        const fechaSeleccionada = document.getElementById('fechaRegistro').value;
+                        const partes = fechaSeleccionada.split('-'); // [YYYY, MM, DD]
+                        const fechaFormat = `${partes[2]}.${partes[1]}.${partes[0]}`;
+                        
+                        // La hora siempre es la del momento actual de la foto
+                        const horas = String(new Date().getHours()).padStart(2, '0');
+                        const minutos = String(new Date().getMinutes()).padStart(2, '0');
+                        
+                        const fechaStr = `${fechaFormat} ${horas}:${minutos}`;
+                        ctx.fillText(fechaStr, textX, textY);
+                        textY += interlineado;
+                        
+                        ctx.fillText(ubicacionGPS, textX, textY);
+                        ctx.shadowColor = "transparent";
+
+                        const base64Generado = canvas.toDataURL("image/jpeg", 0.85);
+                        
+                        fotosLote.push(base64Generado);
+                        actualizarGaleria();
+                        
+                        resolve();
+                    }
+                    img.src = e.target.result;
+                }
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function actualizarGaleria() {
+            const zonaSubida = document.getElementById('zonaSubida');
+            const galeriaScroll = document.getElementById('galeriaScroll');
+            
+            if(fotosLote.length > 0) {
+                zonaSubida.classList.remove('hidden');
+                zonaSubida.classList.add('flex');
+                
+                document.getElementById('contadorFotos').innerText = fotosLote.length;
+                document.getElementById('textoBtnGuardar').innerText = `Subir ${fotosLote.length} foto(s)`;
+                
+                galeriaScroll.innerHTML = "";
+                fotosLote.forEach((foto, index) => {
+                    galeriaScroll.innerHTML += `
+                        <div class="relative w-full aspect-[3/4]">
+                            <img src="${foto}" class="w-full h-full object-cover rounded-lg border border-slate-300 shadow-sm bg-white">
+                            <button onclick="eliminarFoto(${index})" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-[12px] font-bold shadow-md hover:bg-red-600 transition">X</button>
+                        </div>
+                    `;
+                });
+            } else {
+                zonaSubida.classList.add('hidden');
+                zonaSubida.classList.remove('flex');
+            }
+        }
+
+        function eliminarFoto(index) {
+            fotosLote.splice(index, 1);
+            actualizarGaleria();
+        }
+
+        // =====================================
+        // ENVÍO MASIVO AL SERVIDOR
+        // =====================================
+        async function guardarYEnviarLote() {
+            if (fotosLote.length === 0) return;
+            
+            const btn = document.getElementById('btnGuardarMasivo');
+            const toggleLocal = document.getElementById('toggleLocal').checked;
+            const fechaSeleccionada = document.getElementById('fechaRegistro').value; // Extraer valor de la fecha
+            
+            btn.innerHTML = `Enviando fotos... <span class="material-symbols-outlined animate-spin text-lg">refresh</span>`;
+            btn.disabled = true;
+
+            let errores = 0;
+
+            for (let i = 0; i < fotosLote.length; i++) {
+                const fotoBase64 = fotosLote[i];
+
+                if (toggleLocal) {
+                    try {
+                        const a = document.createElement("a");
+                        a.href = fotoBase64;
+                        // Nombre temporal genérico para la descarga local
+                        a.download = `FOTO_LOCAL_${Date.now()}_${i+1}.jpg`; 
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                    } catch(e) {
+                        console.log("Error descarga local: " + i);
+                    }
+                }
+
+                // Payload con la fecha elegida para que el backend organice carpetas y nombres
+                const payload = {
+                    action: "guardarFotoMarcada",
+                    data: {
+                        fotoBase64: fotoBase64.split(",")[1],
+                        fechaSeleccionada: fechaSeleccionada,
+                        indice: i + 1 // Para evitar sobrescribir si se envían varias el mismo día
+                    }
+                };
+
+                try {
+                    await fetch(GOOGLE_APP_URL, {
+                        method: "POST",
+                        mode: "no-cors",
+                        headers: { "Content-Type": "text/plain;charset=utf-8" },
+                        body: JSON.stringify(payload)
+                    });
+                } catch (error) {
+                    errores++;
+                }
+            }
+
+            if (errores === 0) {
+                alert(`✅ Lote de ${fotosLote.length} foto(s) enviado con éxito.`);
+            } else {
+                alert(`⚠️ Proceso terminado, pero ${errores} peticiones fallaron.`);
+            }
+
+            fotosLote = [];
+            actualizarGaleria();
+            btn.innerHTML = `<span class="material-symbols-outlined">cloud_upload</span> Subir Fotos`;
+            btn.disabled = false;
+            document.getElementById('statusText').innerHTML = `<span class="text-green-600 flex items-center justify-center gap-1"><span class="material-symbols-outlined text-[16px]">check_circle</span> Listo para nuevo lote</span>`;
+        }
+    </script>
+</body>
+</html>
