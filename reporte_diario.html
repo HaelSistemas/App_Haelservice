@@ -178,7 +178,14 @@
 
             <!-- PERSONAL -->
             <div class="mb-8 border-t border-slate-100 pt-6">
-                <h4 class="text-base font-bold text-indigo-700 flex items-center gap-2 mb-4"><span class="material-symbols-outlined text-[20px]">groups</span> Personal y Frentes</h4>
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-base font-bold text-indigo-700 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[20px]">groups</span> Personal y Frentes
+                    </h4>
+                    <button type="button" onclick="recargarSelectsManual(this)" class="text-xs bg-slate-200 hover:bg-slate-300 text-slate-700 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition shadow-sm">
+                        <span class="material-symbols-outlined text-[16px]">refresh</span> Actualizar
+                    </button>
+                </div>
                 <div id="personnelContainer" class="space-y-4"></div>
                 
                 <div class="flex gap-2 mb-4 mt-4">
@@ -400,6 +407,29 @@
                 actualizarRubrosSelect(selEsp);
                 selRubro.value = valRubro; 
             });
+        }
+
+        async function recargarSelectsManual(btn) {
+            const origHTML = btn.innerHTML;
+            btn.innerHTML = `<span class="material-symbols-outlined text-[16px] animate-spin">refresh</span> Cargando...`;
+            btn.disabled = true;
+            
+            // Llama al servidor y actualiza la UI
+            await cargarConfiguracion();
+            refrescarSelectsActivos();
+            
+            // Efecto visual de éxito
+            btn.classList.replace('bg-slate-200', 'bg-corpGreen');
+            btn.classList.replace('text-slate-700', 'text-white');
+            btn.innerHTML = `<span class="material-symbols-outlined text-[16px]">check</span> Listo`;
+            
+            // Restaura el botón después de 2 segundos
+            setTimeout(() => {
+                btn.classList.replace('bg-corpGreen', 'bg-slate-200');
+                btn.classList.replace('text-white', 'text-slate-700');
+                btn.innerHTML = origHTML;
+                btn.disabled = false;
+            }, 2000);
         }
 
         async function guardarNuevaConfiguracion() {
