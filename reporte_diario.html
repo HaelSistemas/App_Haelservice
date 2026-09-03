@@ -594,34 +594,139 @@
             const fechaInput = document.getElementById('editDateField').value;
             if(!fechaInput) return alert("Fecha incorrecta.");
             const loading = document.getElementById('loadingModificar'); const cont = document.getElementById('resultadosEdicion');
-            cont.innerHTML = ""; loading.classList.remove('hidden');
+            
+            cont.innerHTML = ""; 
+            loading.classList.remove('hidden');
+            
+            // Si el botón masivo existe, lo ocultamos mientras carga
+            const btnMasivo = document.getElementById('btnContainerEliminarMasivo');
+            if (btnMasivo) btnMasivo.classList.add('hidden');
+
             const res = await fetchAPI("buscarReporteEdicion", { fecha: formatDateForBackend(fechaInput) });
             loading.classList.add('hidden');
             if(!res.success) return alert(res.message);
             const data = res.data;
-            if(data.actividades.length === 0 && data.personal.length === 0 && data.anotaciones.length === 0) { cont.innerHTML = `<div class="text-center text-slate-500 py-8 bg-slate-50 rounded-xl">No hay registros.</div>`; return; }
+            
+            if(data.actividades.length === 0 && data.personal.length === 0 && data.anotaciones.length === 0) { 
+                cont.innerHTML = `<div class="text-center text-slate-500 py-8 bg-slate-50 rounded-xl">No hay registros.</div>`; 
+                return; 
+            }
+            
             if(data.actividades.length > 0) {
                 cont.innerHTML += `<h4 class="text-sm font-bold text-corpBlue-600 border-b pb-2 mb-3 mt-4">Actividades</h4>`;
-                data.actividades.forEach(a => cont.innerHTML += `<div class="bg-white border-l-4 border-corpBlue-500 p-4 rounded-lg shadow-sm border mb-2"><span class="text-[10px] font-bold text-slate-400">${a.id}</span><textarea id="edit_act_${a.id}" class="w-full p-2 mt-1 mb-2 text-sm border rounded" rows="2">${a.texto}</textarea><button class="bg-corpBlue-600 text-white text-xs px-3 py-1.5 rounded" onclick="updateRegistro('ACTIVIDADES', '${a.id}', this)">Actualizar</button></div>`);
+                data.actividades.forEach(a => {
+                    // Generamos la columna derecha solo si hay foto
+                    let visualizadorFoto = a.fotoUrl 
+                        ? `<div class="w-full sm:w-48 flex-shrink-0">
+                             <p class="text-[10px] font-bold text-slate-500 uppercase mb-1">Foto Actual</p>
+                             <a href="${a.fotoUrl.replace('sz=w1000', 'sz=w2000')}" target="_blank" class="block">
+                               <img src="${a.fotoUrl}" class="w-full h-32 object-cover rounded-lg shadow-sm border border-slate-300" alt="Foto vinculada">
+                             </a>
+                           </div>` 
+                        : '';
+
+                    cont.innerHTML += `
+                    <div class="bg-white border-l-4 border-corpBlue-500 p-4 rounded-lg shadow-sm border mb-2">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-[10px] font-bold text-slate-400">${a.id}</span>
+                            <label class="flex items-center gap-1.5 text-xs font-bold text-red-500 cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition border border-red-100">
+                                <input type="checkbox" class="chk-eliminar w-3.5 h-3.5 text-red-600 rounded focus:ring-red-500" data-modulo="ACTIVIDADES" data-id="${a.id}">
+                                Marcar para Eliminar
+                            </label>
+                        </div>
+                        
+                        <!-- CONTENEDOR FLEX: Izquierda Textos / Derecha Foto -->
+                        <div class="flex flex-col sm:flex-row gap-4 mb-4">
+                            <div class="flex-grow flex flex-col justify-between">
+                                <textarea id="edit_act_${a.id}" class="w-full p-2 text-sm border rounded outline-none focus:border-corpBlue-500 flex-grow mb-3" rows="3">${a.texto}</textarea>
+                                <div class="bg-slate-50 p-2 rounded-lg border border-slate-100">
+                                    <label class="text-xs font-semibold text-slate-500 mb-1 block">Sustituir Foto (Opcional):</label>
+                                    <input type="file" id="edit_foto_${a.id}" class="text-xs w-full" accept="image/*">
+                                </div>
+                            </div>
+                            ${visualizadorFoto}
+                        </div>
+                        
+                        <button class="w-full bg-corpBlue-600 hover:bg-corpBlue-700 text-white font-bold text-xs py-2.5 rounded-lg transition" onclick="updateRegistro('ACTIVIDADES', '${a.id}', this)">Actualizar Actividad</button>
+                    </div>`;
+                });
             }
             if(data.personal.length > 0) {
                 cont.innerHTML += `<h4 class="text-sm font-bold text-indigo-700 border-b pb-2 mb-3 mt-4">Personal</h4>`;
-                data.personal.forEach(p => cont.innerHTML += `<div class="bg-white border-l-4 border-indigo-500 p-4 rounded-lg shadow-sm border mb-2"><span class="text-[10px] font-bold text-slate-400">${p.id}</span><div class="grid grid-cols-2 gap-2 mt-1 mb-2"><input id="edit_esp_${p.id}" value="${p.especialidad}" class="p-2 text-sm border rounded"><input id="edit_rubro_${p.id}" value="${p.rubro}" class="p-2 text-sm border rounded"><input id="edit_sector_${p.id}" value="${p.sector}" class="p-2 text-sm border rounded"><input type="number" id="edit_cant_${p.id}" value="${p.cantidad}" class="p-2 text-sm border rounded"></div><button class="bg-indigo-600 text-white text-xs px-3 py-1.5 rounded" onclick="updateRegistro('PERSONAL', '${p.id}', this)">Actualizar</button></div>`);
+                data.personal.forEach(p => cont.innerHTML += `
+                <div class="bg-white border-l-4 border-indigo-500 p-4 rounded-lg shadow-sm border mb-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold text-slate-400">${p.id}</span>
+                        <label class="flex items-center gap-1.5 text-xs font-bold text-red-500 cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition border border-red-100">
+                            <input type="checkbox" class="chk-eliminar w-3.5 h-3.5 text-red-600 rounded focus:ring-red-500" data-modulo="PERSONAL" data-id="${p.id}">
+                            Marcar para Eliminar
+                        </label>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <input id="edit_esp_${p.id}" value="${p.especialidad}" class="p-2 text-sm border rounded outline-none focus:border-indigo-500">
+                        <input id="edit_rubro_${p.id}" value="${p.rubro}" class="p-2 text-sm border rounded outline-none focus:border-indigo-500">
+                        <input id="edit_sector_${p.id}" value="${p.sector}" class="p-2 text-sm border rounded outline-none focus:border-indigo-500">
+                        <input type="number" id="edit_cant_${p.id}" value="${p.cantidad}" class="p-2 text-sm border rounded outline-none focus:border-indigo-500">
+                    </div>
+                    <button class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs py-2.5 rounded-lg transition" onclick="updateRegistro('PERSONAL', '${p.id}', this)">Actualizar Personal</button>
+                </div>`);
             }
             if(data.anotaciones.length > 0) {
                 cont.innerHTML += `<h4 class="text-sm font-bold text-amber-600 border-b pb-2 mb-3 mt-4">Anotaciones</h4>`;
-                data.anotaciones.forEach(a => cont.innerHTML += `<div class="bg-white border-l-4 border-amber-500 p-4 rounded-lg shadow-sm border mb-2"><span class="text-[10px] font-bold text-slate-400">${a.id}</span><div class="mt-1 mb-2 flex gap-2"><input type="time" id="edit_hora_${a.id}" value="${a.hora}" class="p-2 text-sm border rounded"><input id="edit_anot_${a.id}" class="flex-grow p-2 text-sm border rounded" value="${a.texto}"></div><button class="bg-amber-500 text-white text-xs px-3 py-1.5 rounded" onclick="updateRegistro('ANOTACIONES', '${a.id}', this)">Actualizar</button></div>`);
+                data.anotaciones.forEach(a => cont.innerHTML += `
+                <div class="bg-white border-l-4 border-amber-500 p-4 rounded-lg shadow-sm border mb-2">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-[10px] font-bold text-slate-400">${a.id}</span>
+                        <label class="flex items-center gap-1.5 text-xs font-bold text-red-500 cursor-pointer bg-red-50 hover:bg-red-100 px-2 py-1 rounded transition border border-red-100">
+                            <input type="checkbox" class="chk-eliminar w-3.5 h-3.5 text-red-600 rounded focus:ring-red-500" data-modulo="ANOTACIONES" data-id="${a.id}">
+                            Marcar para Eliminar
+                        </label>
+                    </div>
+                    <div class="mb-3 flex gap-2">
+                        <input type="time" id="edit_hora_${a.id}" value="${a.hora}" class="p-2 text-sm border rounded outline-none focus:border-amber-500">
+                        <input id="edit_anot_${a.id}" class="flex-grow p-2 text-sm border rounded outline-none focus:border-amber-500" value="${a.texto}">
+                    </div>
+                    <button class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs py-2.5 rounded-lg transition" onclick="updateRegistro('ANOTACIONES', '${a.id}', this)">Actualizar Anotación</button>
+                </div>`);
             }
+
+            // Inyectar el botón masivo al final de los resultados
+            cont.innerHTML += `
+            <div id="btnContainerEliminarMasivo" class="sticky bottom-4 mt-6">
+                 <button onclick="eliminarSeleccionados()" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl shadow-lg flex justify-center items-center gap-2 transition border border-red-800">
+                     <span class="material-symbols-outlined">delete_sweep</span> Ejecutar Eliminaciones Marcadas
+                 </button>
+            </div>`;
         }
 
-        async function updateRegistro(modulo, id, btn) {
-            let p = { fecha: formatDateForBackend(document.getElementById('editDateField').value), modulo: modulo, id: id };
-            if (modulo === "ACTIVIDADES") p.texto = document.getElementById('edit_act_' + id).value;
-            else if (modulo === "PERSONAL") { p.especialidad = document.getElementById('edit_esp_' + id).value; p.rubro = document.getElementById('edit_rubro_' + id).value; p.sector = document.getElementById('edit_sector_' + id).value; p.cantidad = document.getElementById('edit_cant_' + id).value; }
-            else if (modulo === "ANOTACIONES") { p.hora = document.getElementById('edit_hora_' + id).value; p.texto = document.getElementById('edit_anot_' + id).value; }
-            const orig = btn.innerText; btn.disabled = true; btn.innerText = "Guardando...";
-            const res = await fetchAPI("modificarRegistro", p);
-            if(res.success) { btn.innerText = "✅"; setTimeout(() => { btn.innerText = orig; btn.disabled = false; }, 1500); } else { btn.innerText = orig; btn.disabled = false; alert(res.message); }
+        async function eliminarSeleccionados() {
+            const checkboxes = document.querySelectorAll('.chk-eliminar:checked');
+            if (checkboxes.length === 0) return alert("Selecciona al menos una casilla roja para eliminar.");
+
+            if(!confirm(`¿Estás seguro de eliminar ${checkboxes.length} registro(s)?\nSe reestructurarán todos los correlativos automáticamente.`)) return;
+
+            let itemsAEliminar = [];
+            checkboxes.forEach(chk => {
+                itemsAEliminar.push({ 
+                    modulo: chk.getAttribute('data-modulo'), 
+                    id: chk.getAttribute('data-id') 
+                });
+            });
+
+            let p = { 
+                fecha: formatDateForBackend(document.getElementById('editDateField').value), 
+                items: itemsAEliminar 
+            };
+
+            document.getElementById('resultadosEdicion').innerHTML = `<div class="text-center text-red-500 font-bold py-8"><span class="material-symbols-outlined animate-spin text-3xl mb-2">refresh</span><br>Procesando eliminaciones y reestructurando IDs...</div>`;
+
+            const res = await fetchAPI("eliminarRegistrosMasivo", p);
+            if(res.success) {
+                buscarReporteEdicion(); // Recarga la vista limpia automáticamente
+            } else {
+                alert(res.message);
+                buscarReporteEdicion(); 
+            }
         }
 
         let currentZoom = 0.7;
