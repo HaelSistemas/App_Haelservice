@@ -1311,6 +1311,8 @@
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
             
+            // Necesitamos pasar la estructura completa al backend aunque no todo se haya editado
+            // Recuperamos el objeto base y sobreescribimos con lo del formulario modal
             const itemOriginal = MetradosState.historico.find(i => i.ID_Concreto === data.ID_Concreto);
             const payloadData = { ...itemOriginal, ...data };
             
@@ -1324,8 +1326,9 @@
                 if(response.status === "success") {
                     alert("✅ Registro Histórico actualizado.");
                     cerrarModalHistorico();
-                    buscarMetradosPorRango(); 
+                    buscarMetradosPorRango(); // Refresca lista histórica
                     
+                    // Lógica de colisión: Si modificó un registro del mismo día que el Tab 1, refresca el Tab 1 silenciosamente
                     if (data.Fecha_Semana === document.getElementById('Global_Fecha_Metrado').value) {
                         cargarResumenDiarioMetrados();
                     }
