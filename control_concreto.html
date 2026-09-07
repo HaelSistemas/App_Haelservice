@@ -100,13 +100,13 @@
         <!-- NAVEGACIÓN PRINCIPAL (MÓDULOS) -->
         <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
             <button onclick="switchModule('metrados')" id="btn-mod-metrados" class="flex-1 bg-corpBlue-600 text-white border-corpBlue-600 border rounded-lg py-2.5 px-4 font-bold text-sm shadow-md transition whitespace-nowrap flex justify-center items-center gap-2">
-                <span class="material-symbols-outlined text-lg">square_foot</span> Metrados
+                <span class="material-symbols-outlined text-lg">square_foot</span> Metrado Pedidos
             </button>
             <button onclick="switchModule('mixers')" id="btn-mod-mixers" class="flex-1 bg-white text-slate-500 border border-slate-300 rounded-lg py-2.5 px-4 font-bold text-sm hover:bg-slate-50 transition whitespace-nowrap flex justify-center items-center gap-2">
-                <span class="material-symbols-outlined text-lg">local_shipping</span> Mixers
+                <span class="material-symbols-outlined text-lg">local_shipping</span> Control Mixers
             </button>
             <button onclick="switchModule('probetas')" id="btn-mod-probetas" class="flex-1 bg-white text-slate-500 border border-slate-300 rounded-lg py-2.5 px-4 font-bold text-sm hover:bg-slate-50 transition whitespace-nowrap flex justify-center items-center gap-2">
-                <span class="material-symbols-outlined text-lg">science</span> Probetas
+                <span class="material-symbols-outlined text-lg">science</span> Ensayos Probetas
             </button>
         </div>
 
@@ -117,7 +117,7 @@
             <!-- SUB-PESTAÑAS METRADOS -->
             <div class="flex border-b border-slate-300 mb-6 bg-white rounded-t-xl overflow-hidden shadow-sm">
                 <button onclick="switchTab('tab-registro')" id="btn-tab-registro" class="tab-btn flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-corpBlue-600 text-corpBlue-600 bg-slate-50">
-                    <span class="material-symbols-outlined text-lg">edit_document</span> Registro Metrado
+                    <span class="material-symbols-outlined text-lg">edit_document</span> Registro metrado para pedido
                 </button>
                 <button onclick="switchTab('tab-consulta')" id="btn-tab-consulta" class="tab-btn flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50">
                     <span class="material-symbols-outlined text-lg">search</span> Consultar / Modificar
@@ -125,151 +125,286 @@
             </div>
 
             <!-- REGISTRO METRADOS -->
-            <div id="tab-registro" class="tab-content active bg-white p-6 rounded-b-xl rounded-t-none shadow-md">
-                <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
-                    <span id="form-icon" class="material-symbols-outlined text-3xl text-corpBlue-600">add_circle</span>
-                    <div>
-                        <h2 id="form-title" class="text-xl font-bold text-slate-800">Nuevo Registro de Metrado</h2>
-                        <p class="text-xs text-slate-500">Complete los datos geométricos y de colocado.</p>
+            <div id="tab-registro" class="tab-content active bg-transparent">
+                <!-- CONTROLADOR DE FECHA GLOBAL -->
+                <div class="bg-white p-5 rounded-xl shadow-md border border-slate-200 mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="material-symbols-outlined text-3xl text-corpBlue-600">calendar_month</span>
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800">Fecha de registro</h2>
+                            <p class="text-xs text-slate-500">Seleccione el día para cargar acumulados y registrar metrados.</p>
+                        </div>
+                    </div>
+                    <div class="w-full sm:w-auto">
+                        <input type="date" id="Global_Fecha_Metrado" class="w-full sm:w-48 p-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none font-bold text-slate-700 text-center" onchange="sincronizarFechaYBuscar()">
                     </div>
                 </div>
-                
-                <form id="concretoForm" class="space-y-8">
-                    <input type="hidden" id="form-mode" value="insert">
 
-                    <!-- IDENTIFICACIÓN -->
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">badge</span> 1. Identificación
+                <!-- SECCIÓN 1: RESUMEN Y ACUMULADOS -->
+                <div class="bg-white p-5 rounded-xl shadow-md border border-slate-200 mb-6">
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-3">
+                        <h3 class="text-base font-bold text-corpBlue-600 flex items-center gap-2">
+                            <span class="material-symbols-outlined">bar_chart</span> Resumen y registros de la fecha seleccionada
                         </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">ID Automático</label>
-                                <input type="text" id="ID_Concreto" name="ID_Concreto" readonly class="w-full p-2.5 text-sm border border-slate-200 rounded-lg bg-slate-100 text-slate-500 font-mono outline-none cursor-not-allowed">
+                        <button type="button" onclick="cargarResumenDiarioMetrados()" class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 transition">
+                            <span class="material-symbols-outlined text-[16px]">refresh</span> Actualizar
+                        </button>
+                    </div>
+                    
+                    <div id="loadingResumenMetrados" class="hidden text-center text-corpBlue-600 font-bold py-6">
+                        <span class="material-symbols-outlined animate-spin text-3xl mb-2">refresh</span><br>Cargando registros...
+                    </div>
+                    
+                    <div id="resumenContenido">
+                        <!-- El Acordeón se inyectará aquí desde JS -->
+                    </div>
+                </div>
+
+                <!-- SECCIÓN 2: FORMULARIO DE INGRESO -->
+                <div class="bg-white p-6 rounded-xl shadow-md border border-slate-200">
+                    <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
+                        <span id="form-icon" class="material-symbols-outlined text-3xl text-corpBlue-600">add_circle</span>
+                        <div>
+                            <h2 id="form-title" class="text-xl font-bold text-slate-800">Nuevo registro de metrado</h2>
+                            <p class="text-xs text-slate-500">Complete los datos. La fecha se tomará del bloque superior.</p>
+                        </div>
+                    </div>
+                    
+                    <form id="concretoForm" class="space-y-8">
+                        <input type="hidden" id="form-mode" value="insert">
+                        <input type="hidden" id="Fecha_Semana" name="Fecha_Semana">
+
+                        <!-- IDENTIFICACIÓN -->
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-base">badge</span> 1. Identificación
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">ID Automático</label>
+                                    <input type="text" id="ID_Concreto" name="ID_Concreto" readonly class="w-full p-2.5 text-sm border border-slate-200 rounded-lg bg-slate-100 text-slate-500 font-mono outline-none cursor-not-allowed">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo Concreto</label>
+                                    <select id="Tipo_Concreto" name="Tipo_Concreto" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                        <!-- Opciones llenadas por loadConfigData() -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Semana</label>
+                                    <input type="number" id="Semana" name="Semana" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                </div>
                             </div>
+                        </div>
+
+                        <!-- UBICACIÓN Y ELEMENTO -->
+                        <div>
+                            <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                                <span class="material-symbols-outlined text-base">architecture</span> 2. Ubicación y Elemento
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                                <div class="lg:col-span-2">
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Elementos</label>
+                                    <input type="text" id="Elementos" name="Elementos" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo Elemento</label>
+                                    <select id="Tipo_Elemento" name="Tipo_Elemento" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                        <!-- Opciones llenadas por loadConfigData() -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Etapa</label>
+                                    <select id="Etapa" name="Etapa" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                        <!-- Opciones llenadas por loadConfigData() -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Nivel</label>
+                                    <select id="Nivel" name="Nivel" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                        <!-- Opciones llenadas por loadConfigData() -->
+                                    </select>
+                                </div>
+                                <div class="lg:col-span-5">
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Eje (Opcional)</label>
+                                    <input type="text" id="Eje" name="Eje" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- VOLÚMENES -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                                <h3 class="text-sm font-bold text-corpBlue-600 mb-4 border-b border-corpBlue-100 pb-2">Metrado Geométrico (G)</h3>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div><label class="block text-xs text-slate-600 mb-1">Largo</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="L_G" name="L_G"></div>
+                                    <div><label class="block text-xs text-slate-600 mb-1">Ancho</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="B_G" name="B_G"></div>
+                                    <div><label class="block text-xs text-slate-600 mb-1">Área. Manual</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="A_G" name="A_G"></div>
+                                    <div><label class="block text-xs text-slate-600 mb-1">Altura</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="H_G" name="H_G"></div>
+                                    <div class="col-span-2"><label class="block text-xs font-semibold mb-1">Vol. Manual</label><input type="number" step="0.01" class="calc-g w-full p-2.5 text-sm border rounded-lg" id="Parcial_GMan" name="Parcial_GMan"></div>
+                                </div>
+                                <div class="mt-4 bg-corpBlue-50 border border-corpBlue-200 rounded-lg p-4 text-center">
+                                    <span class="block text-xs font-bold uppercase text-corpBlue-800">Volumen Total</span>
+                                    <span id="preview_val_g" class="block text-2xl font-black mt-1 text-corpBlue-600">0.00 m³</span>
+                                    <input type="hidden" id="Parcial_G" name="Parcial_G">
+                                </div>
+                            </div>
+
+                            <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
+                                <h3 class="text-sm font-bold text-indigo-700 mb-4 border-b border-indigo-100 pb-2">Metrado Campo (C)</h3>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div><label class="block text-xs text-slate-600 mb-1">Largo</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="L_C" name="L_C"></div>
+                                    <div><label class="block text-xs text-slate-600 mb-1">Ancho</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="B_C" name="B_C"></div>
+                                    <div><label class="block text-xs text-slate-600 mb-1">Área. Manual</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="A_C" name="A_C"></div>
+                                    <div><label class="block text-xs text-slate-600 mb-1">Altura</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="H_C" name="H_C"></div>
+                                    <div class="col-span-2"><label class="block text-xs font-semibold mb-1">Vol. Manual</label><input type="number" step="0.01" class="calc-c w-full p-2.5 text-sm border rounded-lg" id="Parcial_CMan" name="Parcial_CMan"></div>
+                                </div>
+                                <div class="mt-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4 text-center">
+                                    <span class="block text-xs font-bold uppercase text-indigo-800">Volumen Total</span>
+                                    <span id="preview_val_c" class="block text-2xl font-black mt-1 text-indigo-600">0.00 m³</span>
+                                    <input type="hidden" id="Parcial_C" name="Parcial_C">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- BOTONES -->
+                        <div class="flex gap-3 pt-4 border-t border-slate-100">
+                            <button type="button" id="btnCancelEdit" class="hidden w-1/3 bg-white text-slate-600 border border-slate-300 font-bold py-3 rounded-lg" onclick="resetForm()">Cancelar</button>
+                            <button type="submit" id="btnSubmit" class="w-full bg-corpGreen hover:bg-corpGreen-hover text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2">Registrar Metrado <span class="material-symbols-outlined">save</span></button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- CONSULTA METRADOS (RANGOS Y EXCEL) -->
+            <div id="tab-consulta" class="tab-content bg-white p-6 rounded-b-xl rounded-t-none shadow-md">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 border-b border-slate-100 pb-4 gap-4">
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2"><span class="material-symbols-outlined text-corpBlue-600">manage_search</span> Consultar y Modificar Registros</h2>
+                    <button onclick="exportarExcelMetrados()" class="bg-corpGreen hover:bg-corpGreen-hover text-white font-bold py-2 px-4 rounded-lg flex items-center gap-2 transition shadow-sm text-sm">
+                        <span class="material-symbols-outlined text-[18px]">download</span> Exportar Excel
+                    </button>
+                </div>
+                
+                <!-- BUSCADOR POR RANGOS -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-end mb-6">
+                    <div class="w-full sm:w-1/3">
+                        <label class="block text-sm font-semibold mb-1 text-slate-600">Fecha Inicio:</label>
+                        <input type="date" id="searchDateStart" class="w-full p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-corpBlue-500 bg-white">
+                    </div>
+                    <div class="w-full sm:w-1/3">
+                        <label class="block text-sm font-semibold mb-1 text-slate-600">Fecha Fin:</label>
+                        <input type="date" id="searchDateEnd" class="w-full p-2.5 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-corpBlue-500 bg-white">
+                    </div>
+                    <button onclick="buscarMetradosPorRango()" class="w-full sm:w-1/3 bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 rounded-lg flex justify-center items-center gap-2 transition shadow-sm">
+                        <span class="material-symbols-outlined">search</span> Buscar en Rango
+                    </button>
+                </div>
+                
+                <div id="loadingMsgConsulta" class="hidden text-center text-corpBlue-600 font-bold py-8">
+                    <span class="material-symbols-outlined animate-spin text-4xl mb-2">refresh</span><br>Buscando registros...
+                </div>
+                
+                <div id="searchResultsConsulta" class="grid grid-cols-1 gap-4">
+                    <div class="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl text-center border border-slate-200">
+                        Seleccione una fecha de inicio y fin, luego presione buscar.
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL DE EDICIÓN HISTÓRICA (Aislamiento Pestaña 2) -->
+            <div id="modal-edicion-historica" class="hidden fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+                <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-slate-200">
+                    <div class="sticky top-0 bg-white border-b border-slate-100 p-4 flex justify-between items-center z-10">
+                        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-indigo-600">edit_square</span>
+                            Modificar Registro Histórico
+                        </h2>
+                        <button type="button" onclick="cerrarModalHistorico()" class="text-slate-400 hover:text-red-500 transition">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+                    
+                    <form id="formEditHistorico" class="p-6 space-y-6">
+                        <input type="hidden" id="modal_ID_Concreto" name="ID_Concreto">
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo Concreto</label>
-                                <select id="Tipo_Concreto" name="Tipo_Concreto" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
-                                    <option value="1175N57B">1175N57B</option>
-                                    <option value="1350N57B">1350N57B</option>
-                                    <option value="1350N67B">1350N67B</option>
+                                <select id="modal_Tipo_Concreto" name="Tipo_Concreto" class="w-full p-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                    <!-- Se llena con JS -->
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Semana</label>
-                                <input type="number" id="Semana" name="Semana" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha</label>
-                                <!-- TIPO DATE CON CALENDARIO -->
-                                <input type="date" id="Fecha_Semana" name="Fecha_Semana" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- UBICACIÓN Y ELEMENTO -->
-                    <div>
-                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-                            <span class="material-symbols-outlined text-base">architecture</span> 2. Ubicación y Elemento
-                        </h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                            <div class="lg:col-span-2">
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Elementos</label>
-                                <input type="text" id="Elementos" name="Elementos" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
-                            </div>
-                            <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo Elemento</label>
-                                <select id="Tipo_Elemento" name="Tipo_Elemento" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
-                                    <option value="Falsa zapata">Falsa zapata</option>
-                                    <option value="Saldo">Saldo</option>
-                                    <option value="Solado">Solado</option>
-                                    <option value="Zapata">Zapata</option>
-                                    <option value="Viga Cim">Viga Cim</option>
-                                    <option value="Placa">Placa</option>
-                                    <option value="Columna">Columna</option>
-                                    <option value="Viga">Viga</option>
-                                    <option value="Losa">Losa</option>
+                                <select id="modal_Tipo_Elemento" name="Tipo_Elemento" class="w-full p-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                    <!-- Se llena con JS -->
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Etapa</label>
-                                <select id="Etapa" name="Etapa" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
-                                    <option value="Subestructura">Subestructura</option>
-                                    <option value="Superestructura">Superestructura</option>
+                                <select id="modal_Etapa" name="Etapa" class="w-full p-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                    <!-- Se llena con JS -->
                                 </select>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-slate-600 mb-1">Nivel</label>
-                                <select id="Nivel" name="Nivel" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
-                                    <option value="Cimentación">Cimentación</option>
-                                    <option value="Cisterna">Cisterna</option>
-                                    <option value="S4">S4</option>
+                                <select id="modal_Nivel" name="Nivel" class="w-full p-2 text-sm border border-slate-300 rounded focus:ring-2 focus:ring-corpBlue-500 outline-none">
+                                    <!-- Se llena con JS -->
                                 </select>
                             </div>
-                            <div class="lg:col-span-5">
-                                <label class="block text-xs font-semibold text-slate-600 mb-1">Eje (Opcional)</label>
-                                <input type="text" id="Eje" name="Eje" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none">
-                            </div>
                         </div>
-                    </div>
 
-                    <!-- VOLÚMENES -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                            <h3 class="text-sm font-bold text-corpBlue-600 mb-4 border-b border-corpBlue-100 pb-2">Metrado Geométrico (G)</h3>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div><label class="block text-xs text-slate-600 mb-1">Largo</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="L_G" name="L_G"></div>
-                                <div><label class="block text-xs text-slate-600 mb-1">Ancho</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="B_G" name="B_G"></div>
-                                <div><label class="block text-xs text-slate-600 mb-1">Área. Manual</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="A_G" name="A_G"></div>
-                                <div><label class="block text-xs text-slate-600 mb-1">Altura</label><input type="number" step="0.01" class="calc-g w-full p-2 text-sm border rounded-lg" id="H_G" name="H_G"></div>
-                                <div class="col-span-2"><label class="block text-xs font-semibold mb-1">Vol. Manual</label><input type="number" step="0.01" class="calc-g w-full p-2.5 text-sm border rounded-lg" id="Parcial_GMan" name="Parcial_GMan"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Elementos</label>
+                                <input type="text" id="modal_Elementos" name="Elementos" required class="w-full p-2 text-sm border border-slate-300 rounded">
                             </div>
-                            <div class="mt-4 bg-corpBlue-50 border border-corpBlue-200 rounded-lg p-4 text-center">
-                                <span class="block text-xs font-bold uppercase text-corpBlue-800">Volumen Total</span>
-                                <span id="preview_val_g" class="block text-2xl font-black mt-1 text-corpBlue-600">0.00 m³</span>
-                                <input type="hidden" id="Parcial_G" name="Parcial_G">
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Semana</label>
+                                <input type="number" id="modal_Semana" name="Semana" required class="w-full p-2 text-sm border border-slate-300 rounded">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-slate-600 mb-1">Fecha</label>
+                                <input type="date" id="modal_Fecha_Semana" name="Fecha_Semana" required class="w-full p-2 text-sm border border-slate-300 rounded">
                             </div>
                         </div>
 
-                        <div class="bg-slate-50 p-5 rounded-xl border border-slate-200">
-                            <h3 class="text-sm font-bold text-indigo-700 mb-4 border-b border-indigo-100 pb-2">Concreto Colocado (C)</h3>
-                            <div class="grid grid-cols-2 gap-3">
-                                <div><label class="block text-xs text-slate-600 mb-1">Largo</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="L_C" name="L_C"></div>
-                                <div><label class="block text-xs text-slate-600 mb-1">Ancho</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="B_C" name="B_C"></div>
-                                <div><label class="block text-xs text-slate-600 mb-1">Área. Manual</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="A_C" name="A_C"></div>
-                                <div><label class="block text-xs text-slate-600 mb-1">Altura</label><input type="number" step="0.01" class="calc-c w-full p-2 text-sm border rounded-lg" id="H_C" name="H_C"></div>
-                                <div class="col-span-2"><label class="block text-xs font-semibold mb-1">Vol. Manual</label><input type="number" step="0.01" class="calc-c w-full p-2.5 text-sm border rounded-lg" id="Parcial_CMan" name="Parcial_CMan"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- GEOMÉTRICO MODAL -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <h3 class="text-sm font-bold text-corpBlue-600 mb-3">Metrado Geométrico (G)</h3>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div><label class="block text-xs text-slate-600">Largo</label><input type="number" step="0.01" class="calc-g-mod w-full p-2 text-sm border rounded" id="modal_L_G" name="L_G"></div>
+                                    <div><label class="block text-xs text-slate-600">Ancho</label><input type="number" step="0.01" class="calc-g-mod w-full p-2 text-sm border rounded" id="modal_B_G" name="B_G"></div>
+                                    <div><label class="block text-xs text-slate-600">Área. Man.</label><input type="number" step="0.01" class="calc-g-mod w-full p-2 text-sm border rounded" id="modal_A_G" name="A_G"></div>
+                                    <div><label class="block text-xs text-slate-600">Altura</label><input type="number" step="0.01" class="calc-g-mod w-full p-2 text-sm border rounded" id="modal_H_G" name="H_G"></div>
+                                    <div class="col-span-2"><label class="block text-xs font-semibold text-slate-600">Vol. Manual</label><input type="number" step="0.01" class="calc-g-mod w-full p-2 text-sm border rounded" id="modal_Parcial_GMan" name="Parcial_GMan"></div>
+                                </div>
+                                <div class="mt-3 text-center"><span class="block text-xs font-bold text-corpBlue-800">Total Geom.</span><span id="modal_preview_g" class="block text-xl font-black text-corpBlue-600">0.00 m³</span><input type="hidden" id="modal_Parcial_G" name="Parcial_G"></div>
                             </div>
-                            <div class="mt-4 bg-indigo-50 border border-indigo-200 rounded-lg p-4 text-center">
-                                <span class="block text-xs font-bold uppercase text-indigo-800">Volumen Total</span>
-                                <span id="preview_val_c" class="block text-2xl font-black mt-1 text-indigo-600">0.00 m³</span>
-                                <input type="hidden" id="Parcial_C" name="Parcial_C">
+
+                            <!-- CAMPO MODAL -->
+                            <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                                <h3 class="text-sm font-bold text-indigo-700 mb-3">Metrado Campo (C)</h3>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div><label class="block text-xs text-slate-600">Largo</label><input type="number" step="0.01" class="calc-c-mod w-full p-2 text-sm border rounded" id="modal_L_C" name="L_C"></div>
+                                    <div><label class="block text-xs text-slate-600">Ancho</label><input type="number" step="0.01" class="calc-c-mod w-full p-2 text-sm border rounded" id="modal_B_C" name="B_C"></div>
+                                    <div><label class="block text-xs text-slate-600">Área. Man.</label><input type="number" step="0.01" class="calc-c-mod w-full p-2 text-sm border rounded" id="modal_A_C" name="A_C"></div>
+                                    <div><label class="block text-xs text-slate-600">Altura</label><input type="number" step="0.01" class="calc-c-mod w-full p-2 text-sm border rounded" id="modal_H_C" name="H_C"></div>
+                                    <div class="col-span-2"><label class="block text-xs font-semibold text-slate-600">Vol. Manual</label><input type="number" step="0.01" class="calc-c-mod w-full p-2 text-sm border rounded" id="modal_Parcial_CMan" name="Parcial_CMan"></div>
+                                </div>
+                                <div class="mt-3 text-center"><span class="block text-xs font-bold text-indigo-800">Total Campo</span><span id="modal_preview_c" class="block text-xl font-black text-indigo-600">0.00 m³</span><input type="hidden" id="modal_Parcial_C" name="Parcial_C"></div>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- BOTONES -->
-                    <div class="flex gap-3 pt-4 border-t border-slate-100">
-                        <button type="button" id="btnCancelEdit" class="hidden w-1/3 bg-white text-slate-600 border border-slate-300 font-bold py-3 rounded-lg" onclick="resetForm()">Cancelar</button>
-                        <!-- BOTÓN DE ACCIÓN VERDE CORPORATIVO -->
-                        <button type="submit" id="btnSubmit" class="w-full bg-corpGreen hover:bg-corpGreen-hover text-white font-bold py-3 rounded-lg flex justify-center items-center gap-2">Registrar Consumo <span class="material-symbols-outlined">save</span></button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- CONSULTA METRADOS -->
-            <div id="tab-consulta" class="tab-content bg-white p-6 rounded-b-xl rounded-t-none shadow-md">
-                <h2 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-corpBlue-600">manage_search</span> Consultar Registros</h2>
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col sm:flex-row gap-4 items-end mb-6">
-                    <div class="w-full sm:w-2/3">
-                        <label class="block text-sm font-semibold mb-1">Fecha (DD/MM/YYYY):</label>
-                        <input type="text" id="searchDate" placeholder="DD/MM/YYYY" class="w-full p-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-corpBlue-500">
-                    </div>
-                    <button onclick="searchByDate()" class="w-full sm:w-1/3 bg-slate-800 text-white font-bold py-2.5 rounded-lg flex justify-center items-center gap-2"><span class="material-symbols-outlined">search</span> Buscar</button>
+                        <div class="flex justify-end gap-3 pt-4 border-t border-slate-100">
+                            <button type="button" onclick="cerrarModalHistorico()" class="px-5 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-600 font-bold hover:bg-slate-50">Cancelar</button>
+                            <button type="submit" id="btnSubmitModal" class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 rounded-lg text-white font-bold flex items-center gap-2">Actualizar Histórico <span class="material-symbols-outlined">save</span></button>
+                        </div>
+                    </form>
                 </div>
-                <div id="loadingMsg" class="hidden text-center text-corpBlue-600 font-bold py-8">Buscando...</div>
-                <div id="searchResults" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
+            
         </div>
 
         <!-- ========================================== -->
@@ -280,7 +415,7 @@
             <!-- SUB-PESTAÑAS MIXERS -->
             <div class="flex border-b border-slate-300 mb-6 bg-white rounded-t-xl overflow-hidden shadow-sm">
                 <button onclick="switchMixerTab('tab-registro-mixer')" id="btn-tab-registro-mixer" class="tab-btn-mixer flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-corpBlue-600 text-corpBlue-600 bg-slate-50">
-                    <span class="material-symbols-outlined text-lg">local_shipping</span> Registro Ingreso
+                    <span class="material-symbols-outlined text-lg">local_shipping</span> Registro Mixers
                 </button>
                 <button onclick="switchMixerTab('tab-consulta-mixer')" id="btn-tab-consulta-mixer" class="tab-btn-mixer flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50">
                     <span class="material-symbols-outlined text-lg">search</span> Consultar / Modificar
@@ -292,7 +427,7 @@
                 <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
                     <span id="form-icon-mixer" class="material-symbols-outlined text-3xl text-corpBlue-600">add_circle</span>
                     <div>
-                        <h2 id="form-title-mixer" class="text-xl font-bold text-slate-800">Registro de Ingreso de Concreto</h2>
+                        <h2 id="form-title-mixer" class="text-xl font-bold text-slate-800">Registro de Ingreso de Mixers</h2>
                     </div>
                 </div>
                 
@@ -400,11 +535,11 @@
                                     <input type="text" id="Id_Probeta" name="Id_Probeta" readonly placeholder="Gen. Automática..." class="w-full p-2.5 text-sm border border-slate-200 rounded-lg bg-corpBlue-50 text-corpBlue-700 font-mono font-bold outline-none cursor-not-allowed">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Periodo 1 (Días)</label>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Periodo ensayo 1 (Días)</label>
                                     <input type="number" id="Periodo_1" name="Periodo_1" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none" placeholder="Ej. 7">
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Periodo 2 (Días)</label>
+                                    <label class="block text-xs font-semibold text-slate-600 mb-1">Periodo ensayo 2 (Días)</label>
                                     <input type="number" id="Periodo_2" name="Periodo_2" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 outline-none" placeholder="Ej. 28">
                                 </div>
                             </div>
@@ -487,7 +622,7 @@
                 </div>
                 <div id="pendingProbetasList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="col-span-full text-center text-slate-400 py-8 border-2 border-dashed border-slate-200 rounded-xl">
-                        Presiona "Actualizar Lista" para buscar probetas pendientes.
+                        Presiona "Actualizar Lista" para buscar ensayos pendientes.
                     </div>
                 </div>
             </div>
@@ -497,7 +632,7 @@
                 <div class="flex items-center gap-2 mb-6 border-b border-slate-100 pb-4">
                     <span class="material-symbols-outlined text-3xl text-indigo-600">science</span>
                     <div>
-                        <h2 id="form-title-probeta" class="text-xl font-bold text-slate-800">Resultados de Laboratorio</h2>
+                        <h2 id="form-title-probeta" class="text-xl font-bold text-slate-800">Resultados de Ensayos</h2>
                         <p id="form-subtitle-probeta" class="text-xs text-slate-500">Seleccione un ensayo desde Pendientes o Consultar.</p>
                     </div>
                 </div>
@@ -538,7 +673,7 @@
                             <input type="number" step="0.01" id="Probeta_P2" name="fcP2" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500 text-center">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">F'c Muestra 3 (Opcional)</label>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">F'c Muestra 3</label>
                             <input type="number" step="0.01" id="Probeta_P3" name="fcP3" class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500 text-center">
                         </div>
                     </div>
@@ -549,7 +684,7 @@
                             <input type="text" id="Probeta_Certificado" name="idCertificado" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500">
                         </div>
                         <div>
-                            <label class="block text-xs font-semibold text-slate-600 mb-1">Status Final</label>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Conformidad</label>
                             <select id="Probeta_Status" name="status" required class="w-full p-2.5 text-sm border border-slate-300 rounded-lg outline-none focus:border-indigo-500">
                                 <option value="Conforme">Conforme</option>
                                 <option value="Observado">Observado</option>
@@ -642,16 +777,35 @@
                     });
                 };
 
+                // Llenar Formulario Diario
                 populateSelect('Tipo_Concreto', config.tiposConcreto);
                 populateSelect('Tipo_Mixer', config.tiposConcreto); 
                 populateSelect('Tipo_Elemento', config.tiposElemento);
                 populateSelect('Etapa', config.etapas);
                 populateSelect('Nivel', config.niveles);
 
+                // Llenar Modal Histórico
+                populateSelect('modal_Tipo_Concreto', config.tiposConcreto);
+                populateSelect('modal_Tipo_Elemento', config.tiposElemento);
+                populateSelect('modal_Etapa', config.etapas);
+                populateSelect('modal_Nivel', config.niveles);
+
             } catch (error) {
                 console.error("Error cargando las listas desplegables:", error);
             }
         }
+
+        // ==========================================
+        // INICIALIZACIÓN GLOBAL
+        // ==========================================
+        window.onload = async () => {
+            // 1. OBLIGAMOS al sistema a esperar a que loadConfigData termine de traer las listas
+            await loadConfigData();
+            
+            // 2. Solo entonces, disparamos los resets y las búsquedas
+            if (typeof resetForm === 'function') resetForm();
+            if (typeof resetFormMixer === 'function') resetFormMixer();
+        };
 
         // GESTIÓN DE MÓDULOS PRINCIPALES
         function switchModule(moduleName) {
@@ -667,130 +821,193 @@
         }
 
         // ==========================================
-        // LÓGICA METRADOS
+        // LÓGICA METRADOS (ESTADOS AISLADOS)
         // ==========================================
+
+        // 1. GESTOR DE ESTADOS
+        const MetradosState = {
+            diario: [],     // Almacena data del Tab 1 (Día seleccionado)
+            historico: []   // Almacena data del Tab 2 (Rango histórico)
+        };
+
+        // 2. NAVEGACIÓN DE TABS
         function switchTab(tabId) {
             document.getElementById('tab-registro').classList.remove('active');
             document.getElementById('tab-consulta').classList.remove('active');
             const btnReg = document.getElementById('btn-tab-registro');
             const btnCon = document.getElementById('btn-tab-consulta');
+            
             btnReg.className = "tab-btn flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 text-slate-500 border-transparent hover:bg-slate-50";
             btnCon.className = "tab-btn flex-1 py-3 font-bold text-sm text-center transition flex justify-center items-center gap-2 border-b-2 text-slate-500 border-transparent hover:bg-slate-50";
+            
             document.getElementById(tabId).classList.add('active');
             const activeBtn = document.getElementById('btn-' + tabId);
             activeBtn.classList.remove('text-slate-500', 'border-transparent');
             activeBtn.classList.add('border-corpBlue-600', 'text-corpBlue-600', 'bg-slate-50');
         }
 
-        function applyDateMask(inputElement) {
-            if(!inputElement) return;
-            inputElement.addEventListener('input', function(e) {
-                let val = this.value.replace(/\D/g, '');
-                if(val.length >= 2 && val.length < 4) val = val.substring(0,2) + '/' + val.substring(2);
-                else if(val.length >= 4) val = val.substring(0,2) + '/' + val.substring(2,4) + '/' + val.substring(4,8);
-                this.value = val;
-            });
+        // 3. FORMATEADORES DE FECHA
+        function formatDateForInputDate(dStr) {
+            if(!dStr) return "";
+            let str = String(dStr);
+            if (str.includes('T')) return str.split('T')[0];
+            if (str.includes('/')) {
+                const p = str.split('/');
+                if(p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`;
+            }
+            return str;
         }
 
-        window.onload = () => {
-            loadConfigData(); 
-            resetForm();
-            resetFormMixer();
-            // Solo aplicamos la máscara a los buscadores porque los registros ya son input type="date"
-            applyDateMask(document.getElementById('searchDate'));
-            applyDateMask(document.getElementById('searchDateMixer'));
-            applyDateMask(document.getElementById('searchDateProbeta'));
-        };
+        function formatInputDateToSpanish(isoString) {
+            if(!isoString) return "";
+            const p = isoString.split('-');
+            if(p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
+            return isoString;
+        }
 
+        // 4. MATEMÁTICAS (Cálculo de Volúmenes)
         const getVal = (id) => parseFloat(document.getElementById(id).value) || 0;
 
-        function calculateG() {
-            const L = getVal('L_G'), B = getVal('B_G'), A = getVal('A_G'), H = getVal('H_G'), Man = getVal('Parcial_GMan');
+        function runCalculations(prefix, type) {
+            const L = getVal(`${prefix}L_${type}`), B = getVal(`${prefix}B_${type}`), A = getVal(`${prefix}A_${type}`), H = getVal(`${prefix}H_${type}`), Man = getVal(`${prefix}Parcial_${type}Man`);
             let total = Man !== 0 ? Man : (A !== 0 ? A * H : L * B * H);
             const finalVol = (Math.round(total * 100) / 100).toFixed(2);
-            document.getElementById('Parcial_G').value = finalVol;
-            document.getElementById('preview_val_g').innerText = finalVol + " m³";
+            document.getElementById(`${prefix}Parcial_${type}`).value = finalVol;
+            
+            const previewEl = document.getElementById(`${prefix}preview_${type === 'G' ? 'val_g' : 'val_c'}`) 
+                        || document.getElementById(`${prefix}preview_${type.toLowerCase()}`);
+            if(previewEl) previewEl.innerText = finalVol + " m³";
         }
 
-        function calculateC() {
-            const L = getVal('L_C'), B = getVal('B_C'), A = getVal('A_C'), H = getVal('H_C'), Man = getVal('Parcial_CMan');
-            let total = Man !== 0 ? Man : (A !== 0 ? A * H : L * B * H);
-            const finalVol = (Math.round(total * 100) / 100).toFixed(2);
-            document.getElementById('Parcial_C').value = finalVol;
-            document.getElementById('preview_val_c').innerText = finalVol + " m³";
+        // Event Listeners para cálculos en vivo (Formulario Tab 1)
+        document.querySelectorAll('.calc-g').forEach(input => input.addEventListener('input', () => runCalculations('', 'G')));
+        document.querySelectorAll('.calc-c').forEach(input => input.addEventListener('input', () => runCalculations('', 'C')));
+        // Event Listeners para cálculos en vivo (Modal Histórico)
+        document.querySelectorAll('.calc-g-mod').forEach(input => input.addEventListener('input', () => runCalculations('modal_', 'G')));
+        document.querySelectorAll('.calc-c-mod').forEach(input => input.addEventListener('input', () => runCalculations('modal_', 'C')));
+
+        // ==========================================
+        // ECOSISTEMA TAB 1: REGISTRO DIARIO
+        // ==========================================
+
+        function sincronizarFechaYBuscar() {
+            const globalDate = document.getElementById('Global_Fecha_Metrado').value;
+            document.getElementById('Fecha_Semana').value = globalDate;
+            cargarResumenDiarioMetrados();
         }
 
-        document.querySelectorAll('.calc-g').forEach(input => input.addEventListener('input', calculateG));
-        document.querySelectorAll('.calc-c').forEach(input => input.addEventListener('input', calculateC));
-
-        // Formatea fechas YYYY-MM-DD para mostrarlas en el frontend como DD/MM/YYYY si se necesita, 
-        // pero como ahora usamos type="date", el value debe ser YYYY-MM-DD
-        function formatDateForInputDate(dStr) {
-             if(!dStr) return "";
-             let str = String(dStr);
-             if (str.includes('T')) {
-                  return str.split('T')[0];
-             }
-             if (str.includes('/')) {
-                 const p = str.split('/');
-                 if(p.length === 3) return `${p[2]}-${p[1]}-${p[0]}`;
-             }
-             return str;
-        }
-
-        function searchByDate() {
-            const dateFormatted = document.getElementById('searchDate').value;
-            if (!dateFormatted || dateFormatted.length !== 10) { alert("Formato requerido: DD/MM/YYYY"); return; }
-            const container = document.getElementById('searchResults');
-            const loading = document.getElementById('loadingMsg');
-            container.innerHTML = "";
+        async function cargarResumenDiarioMetrados() {
+            const dateInput = document.getElementById('Global_Fecha_Metrado').value;
+            if (!dateInput) return;
+            
+            const dateFormatted = formatInputDateToSpanish(dateInput);
+            const container = document.getElementById('resumenContenido');
+            const loading = document.getElementById('loadingResumenMetrados');
+            
+            container.classList.add('hidden');
             loading.classList.remove('hidden');
 
-            fetch(`${GOOGLE_APP_URL}?action=search_metrado&fecha=${encodeURIComponent(dateFormatted)}`)
-                .then(res => res.json())
-                .then(data => {
-                    loading.classList.add('hidden');
-                    if(data.length === 0) {
-                        container.innerHTML = `<div class="col-span-full text-center py-8">No hay registros para ${dateFormatted}</div>`;
-                        return;
-                    }
+            try {
+                const res = await fetch(`${GOOGLE_APP_URL}?action=search_metrado&fecha=${encodeURIComponent(dateFormatted)}`);
+                const data = await res.json();
+                
+                loading.classList.add('hidden');
+                container.classList.remove('hidden');
+                
+                // Guardar en estado local aislado
+                MetradosState.diario = data; 
 
-                    let totalM3 = 0;
-                    data.forEach(item => {
-                        const val = parseFloat(item.Parcial_G);
-                        if (!isNaN(val)) totalM3 += val;
-                    });
-                    
-                    const totalHeader = document.createElement('div');
-                    totalHeader.className = "col-span-full bg-corpBlue-50 border border-corpBlue-200 text-corpBlue-800 p-4 rounded-xl flex justify-between items-center mb-4";
-                    totalHeader.innerHTML = `<span class="font-bold">Total del Día:</span><span class="text-xl font-black">${totalM3.toFixed(2)} m³</span>`;
-                    container.appendChild(totalHeader);
+                if(data.length === 0) {
+                    container.innerHTML = `<div class="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl text-center border border-slate-200">No hay metrados ingresados el ${dateFormatted}.</div>`;
+                    return;
+                }
 
-                    data.forEach(item => {
-                        const card = document.createElement('div');
-                        card.className = "bg-white border rounded-xl p-4 cursor-pointer flex justify-between hover:border-corpBlue-400 hover:shadow-md transition";
-                        card.onclick = () => loadRecordForEdit(item);
-                        card.innerHTML = `
-                            <div>
-                                <span class="text-[10px] bg-slate-100 px-2 rounded">${item.Tipo_Concreto}</span>
-                                <h4 class="font-bold">${item.Elementos} <span class="text-sm font-normal">(${item.Tipo_Elemento})</span></h4>
-                                <p class="text-xs text-slate-400">${item.ID_Concreto}</p>
-                            </div>
-                            <div class="text-right">
-                                <div class="text-corpBlue-600 font-black">${item.Parcial_G} m³</div>
-                                <div class="text-xs text-slate-400 mt-1">Editar ✎</div>
-                            </div>
-                        `;
-                        container.appendChild(card);
-                    });
-                })
-                .catch(() => {
-                    loading.classList.add('hidden');
-                    container.innerHTML = '<div class="col-span-full text-red-500 text-center">Error de conexión.</div>';
+                // Agrupamiento por Tipo Concreto
+                let acumulados = {};
+                data.forEach((item, index) => {
+                    let tipo = item.Tipo_Concreto || "Desconocido";
+                    if(!acumulados[tipo]) acumulados[tipo] = { geom: 0, camp: 0, registros: [] };
+                    acumulados[tipo].geom += parseFloat(item.Parcial_G) || 0;
+                    acumulados[tipo].camp += parseFloat(item.Parcial_C) || 0;
+                    acumulados[tipo].registros.push({ ...item, stateIndex: index }); 
                 });
+
+                container.innerHTML = "";
+                let groupCounter = 0;
+
+                for (const [tipo, vals] of Object.entries(acumulados)) {
+                    const groupId = `grupo_metrado_${groupCounter}`;
+                    let filasHTML = "";
+                    vals.registros.forEach(reg => {
+                        filasHTML += `
+                            <tr class="hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
+                                <td class="px-4 py-3">
+                                    <p class="font-bold text-slate-800">${reg.Elementos}</p>
+                                    <p class="text-[10px] text-slate-400 font-mono">${reg.ID_Concreto}</p>
+                                </td>
+                                <td class="px-4 py-3 text-right font-bold text-corpBlue-600">${reg.Parcial_G} m³</td>
+                                <td class="px-4 py-3 text-right font-bold text-indigo-600">${reg.Parcial_C} m³</td>
+                                <td class="px-4 py-3 text-center">
+                                    <button type="button" onclick="editarRegistroDiario(${reg.stateIndex})" class="text-corpBlue-600 hover:bg-corpBlue-100 p-2 rounded-lg transition" title="Modificar este registro">
+                                        <span class="material-symbols-outlined text-[18px]">edit</span>
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    });
+
+                    container.innerHTML += `
+                        <div class="mb-4 border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
+                            <div class="bg-slate-50 hover:bg-corpBlue-50 p-4 cursor-pointer transition flex justify-between items-center border-b border-transparent" onclick="toggleAcordeonMetrado('${groupId}')">
+                                <div>
+                                    <p class="text-sm font-bold text-corpBlue-800 uppercase mb-1">${tipo}</p>
+                                    <p class="text-[11px] text-slate-500 font-medium">${vals.registros.length} registro(s)</p>
+                                </div>
+                                <div class="flex items-center gap-6">
+                                    <div class="text-right border-r border-slate-200 pr-6">
+                                        <p class="text-[10px] text-slate-500 uppercase">Total Geom.</p>
+                                        <p class="text-base font-black text-corpBlue-700">${vals.geom.toFixed(2)} m³</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-[10px] text-slate-500 uppercase">Total Campo</p>
+                                        <p class="text-base font-black text-indigo-700">${vals.camp.toFixed(2)} m³</p>
+                                    </div>
+                                    <span id="icon_${groupId}" class="material-symbols-outlined text-slate-400 transition-transform duration-300">expand_more</span>
+                                </div>
+                            </div>
+                            <div id="${groupId}" class="hidden border-t border-slate-200 bg-white overflow-x-auto">
+                                <table class="w-full text-sm text-left text-slate-600">
+                                    <thead class="text-[11px] text-slate-500 bg-white uppercase border-b border-slate-100">
+                                        <tr>
+                                            <th class="px-4 py-3">Elemento / ID</th>
+                                            <th class="px-4 py-3 text-right">M. Geométrico</th>
+                                            <th class="px-4 py-3 text-right">M. Campo</th>
+                                            <th class="px-4 py-3 text-center w-24">Acción</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-100">${filasHTML}</tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                    groupCounter++;
+                }
+            } catch (error) {
+                loading.classList.add('hidden');
+                container.classList.remove('hidden');
+                container.innerHTML = `<div class="text-sm text-red-500 bg-red-50 p-4 rounded-xl text-center border border-red-200">Error de conexión al cargar la fecha.</div>`;
+            }
         }
 
-        function loadRecordForEdit(item) {
+        function toggleAcordeonMetrado(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById('icon_' + id);
+            content.classList.toggle('hidden');
+            icon.style.transform = content.classList.contains('hidden') ? 'rotate(0deg)' : 'rotate(180deg)';
+        }
+
+        function editarRegistroDiario(index) {
+            const item = MetradosState.diario[index];
             document.getElementById('form-mode').value = 'update';
             document.getElementById('form-title').innerText = 'Modificar Registro: ' + item.Elementos;
             document.getElementById('form-icon').innerText = 'edit_note';
@@ -802,47 +1019,47 @@
             
             document.getElementById('btnCancelEdit').classList.remove('hidden');
             
-            item.Fecha_Semana = formatDateForInputDate(item.Fecha_Semana);
-
-            const fields = ['ID_Concreto', 'Tipo_Concreto', 'Semana', 'Fecha_Semana', 'Elementos', 'Tipo_Elemento', 'Etapa', 'Nivel', 'Eje', 'L_G', 'B_G', 'A_G', 'H_G', 'Parcial_GMan', 'L_C', 'B_C', 'A_C', 'H_C', 'Parcial_CMan'];
+            const fields = ['ID_Concreto', 'Tipo_Concreto', 'Semana', 'Elementos', 'Tipo_Elemento', 'Etapa', 'Nivel', 'Eje', 'L_G', 'B_G', 'A_G', 'H_G', 'Parcial_GMan', 'L_C', 'B_C', 'A_C', 'H_C', 'Parcial_CMan'];
             fields.forEach(f => { if(document.getElementById(f)) document.getElementById(f).value = item[f] || ""; });
+            
+            // Forzar fecha de item al hidden input, ignorando el global por seguridad
+            document.getElementById('Fecha_Semana').value = formatDateForInputDate(item.Fecha_Semana);
 
-            calculateG(); calculateC();
-            switchTab('tab-registro');
+            runCalculations('', 'G'); runCalculations('', 'C');
+            document.getElementById('concretoForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
 
         function resetForm() {
             document.getElementById('concretoForm').reset();
             document.getElementById('form-mode').value = 'insert';
-            document.getElementById('form-title').innerText = 'Nuevo Registro de Metrado';
+            document.getElementById('form-title').innerText = 'Nuevo registro de metrado';
             document.getElementById('form-icon').innerText = 'add_circle';
             
             const btn = document.getElementById('btnSubmit');
-            btn.innerHTML = 'Registrar Consumo <span class="material-symbols-outlined text-lg">save</span>';
+            btn.innerHTML = 'Registrar Metrado <span class="material-symbols-outlined text-lg">save</span>';
             btn.classList.replace('bg-indigo-600', 'bg-corpGreen');
             btn.classList.replace('hover:bg-indigo-700', 'hover:bg-corpGreen-hover');
             
             document.getElementById('btnCancelEdit').classList.add('hidden');
             document.getElementById('ID_Concreto').value = 'Generación Automática...';
             
-            // Setear la fecha actual por defecto en el input date
-            document.getElementById('Fecha_Semana').value = new Date().toISOString().split('T')[0];
+            const globalInput = document.getElementById('Global_Fecha_Metrado');
+            if (!globalInput.value) {
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = String(now.getMonth() + 1).padStart(2, '0');
+                const day = String(now.getDate()).padStart(2, '0');
+                globalInput.value = `${year}-${month}-${day}`;
+            }
             
-            calculateG(); calculateC();
-        }
-
-        // --- FUNCION AUXILIAR PARA VOLVER A DD/MM/YYYY ANTES DE MANDAR AL SERVIDOR ---
-        function formatInputDateToSpanish(isoString) {
-             if(!isoString) return "";
-             const p = isoString.split('-');
-             if(p.length === 3) return `${p[2]}/${p[1]}/${p[0]}`;
-             return isoString;
+            sincronizarFechaYBuscar(); 
+            runCalculations('', 'G'); runCalculations('', 'C');
         }
 
         document.getElementById('concretoForm').addEventListener('submit', function(e) {
             e.preventDefault();
             const dateVal = document.getElementById('Fecha_Semana').value;
-            if(!dateVal) { alert("Debe ingresar una fecha."); return; }
+            if(!dateVal) return alert("Debe ingresar una fecha.");
             
             const submitBtn = document.getElementById('btnSubmit');
             const originalText = submitBtn.innerHTML;
@@ -853,8 +1070,6 @@
             const data = Object.fromEntries(formData.entries());
             data.Parcial_G = document.getElementById('Parcial_G').value;
             data.Parcial_C = document.getElementById('Parcial_C').value;
-            
-            // Re-formatear fecha antes de enviar al script
             data.Fecha_Semana = formatInputDateToSpanish(data.Fecha_Semana);
 
             const payload = { module: 'metrado', action: document.getElementById('form-mode').value, data: data };
@@ -864,12 +1079,386 @@
             .then(response => {
                 if(response.status === "success") {
                     alert(payload.action === 'insert' ? `✅ Guardado exitoso. ID: ${response.idGenerado}` : "✅ Actualización exitosa.");
-                    resetForm();
+                    resetForm(); // Limpia formulario y refresca Tab 1
                 } else alert("Error: " + response.message);
             })
             .catch(() => alert("Ocurrió un error al guardar."))
             .finally(() => { submitBtn.disabled = false; submitBtn.innerHTML = originalText; });
         });
+
+
+        // ==========================================
+        // ECOSISTEMA TAB 2: CONSULTA HISTÓRICA
+        // ==========================================
+
+        async function buscarMetradosPorRango() {
+            const fInicio = document.getElementById('searchDateStart').value;
+            const fFin = document.getElementById('searchDateEnd').value;
+            
+            if (!fInicio || !fFin) return alert("Seleccione ambas fechas para buscar.");
+            if (new Date(fInicio) > new Date(fFin)) return alert("La fecha inicio no puede ser mayor a la fecha fin.");
+
+            const container = document.getElementById('searchResultsConsulta');
+            const loading = document.getElementById('loadingMsgConsulta');
+            
+            container.innerHTML = "";
+            loading.classList.remove('hidden');
+
+            try {
+                const url = `${GOOGLE_APP_URL}?action=search_metrado_rango&inicio=${fInicio}&fin=${fFin}`;
+                const res = await fetch(url);
+                const data = await res.json();
+                
+                loading.classList.add('hidden');
+                MetradosState.historico = data; // Guardar en estado aislado
+
+                if(data.length === 0) {
+                    container.innerHTML = `<div class="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl text-center border border-slate-200">No se encontraron registros entre el ${formatInputDateToSpanish(fInicio)} y ${formatInputDateToSpanish(fFin)}.</div>`;
+                    return;
+                }
+
+                // 1. ESTRUCTURAS PARA AGRUPACIÓN
+                let globalTotales = { geom: 0, camp: 0, porTipo: {} };
+                let agrupadoPorFecha = {}; 
+
+                // 2. PROCESAMIENTO DE DATOS
+                data.forEach((item, index) => {
+                    let fecha = item.Fecha_Semana || "Sin Fecha";
+                    let tipo = item.Tipo_Concreto || "Desconocido";
+                    let vGeom = parseFloat(item.Parcial_G) || 0;
+                    let vCamp = parseFloat(item.Parcial_C) || 0;
+
+                    // A. Sumar al Global
+                    globalTotales.geom += vGeom;
+                    globalTotales.camp += vCamp;
+                    if(!globalTotales.porTipo[tipo]) globalTotales.porTipo[tipo] = { geom: 0, camp: 0 };
+                    globalTotales.porTipo[tipo].geom += vGeom;
+                    globalTotales.porTipo[tipo].camp += vCamp;
+
+                    // B. Agrupar por Fecha -> Tipo
+                    if(!agrupadoPorFecha[fecha]) agrupadoPorFecha[fecha] = {};
+                    if(!agrupadoPorFecha[fecha][tipo]) agrupadoPorFecha[fecha][tipo] = { geom: 0, camp: 0, registros: [] };
+
+                    agrupadoPorFecha[fecha][tipo].geom += vGeom;
+                    agrupadoPorFecha[fecha][tipo].camp += vCamp;
+                    agrupadoPorFecha[fecha][tipo].registros.push({ ...item, stateIndex: index }); 
+                });
+
+                let htmlContent = "";
+
+                // 3. RENDERIZAR PANEL GLOBAL (Total del Rango y por Resistencia)
+                let htmlTiposGlobal = "";
+                for (const [tipo, total] of Object.entries(globalTotales.porTipo)) {
+                    htmlTiposGlobal += `
+                        <div class="bg-white p-3 rounded-lg border border-slate-100 shadow-sm flex justify-between items-center">
+                            <span class="text-xs font-bold text-slate-700">${tipo}</span>
+                            <span class="text-sm font-black text-corpBlue-600">${total.geom.toFixed(2)} m³</span>
+                        </div>
+                    `;
+                }
+
+                htmlContent += `
+                    <div class="bg-slate-50 border border-slate-200 rounded-xl p-5 mb-8 shadow-sm">
+                        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-200 pb-4 mb-4 gap-4">
+                            <div>
+                                <h3 class="font-black text-slate-800 text-lg uppercase">Resumen del Rango</h3>
+                                <p class="text-xs text-slate-500">${formatInputDateToSpanish(fInicio)} - ${formatInputDateToSpanish(fFin)}</p>
+                            </div>
+                            <div class="flex gap-6 bg-white py-2 px-4 rounded-lg border border-slate-100 shadow-sm w-full sm:w-auto justify-between sm:justify-start">
+                                <div class="text-right">
+                                    <span class="text-[10px] uppercase font-bold text-slate-400">Total Geom.</span><br>
+                                    <span class="text-xl font-black text-corpBlue-700">${globalTotales.geom.toFixed(2)} m³</span>
+                                </div>
+                                <div class="text-right border-l border-slate-100 pl-6">
+                                    <span class="text-[10px] uppercase font-bold text-slate-400">Total Campo</span><br>
+                                    <span class="text-xl font-black text-indigo-700">${globalTotales.camp.toFixed(2)} m³</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-xs font-bold text-slate-500 mb-3 uppercase">Total Acumulado por Tipo de Concreto</h4>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                ${htmlTiposGlobal}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 4. ORDENAR FECHAS CRONOLÓGICAMENTE
+                const dateToSort = (dStr) => {
+                    if(dStr === "Sin Fecha") return 0;
+                    let p = dStr.split('/');
+                    if(p.length === 3) return parseInt(`${p[2]}${p[1]}${p[0]}`); // YYYYMMDD
+                    return 99999999;
+                };
+                const fechasOrdenadas = Object.keys(agrupadoPorFecha).sort((a, b) => dateToSort(a) - dateToSort(b));
+
+                // 5. RENDERIZAR ACORDEONES POR FECHA
+                let groupCounter = 0;
+                
+                fechasOrdenadas.forEach(fecha => {
+                    // Título de la Fecha
+                    htmlContent += `
+                        <div class="mt-2 mb-1 border-b border-slate-200 pb-1 flex items-center gap-2">
+                            <span class="material-symbols-outlined text-corpBlue-600">event_note</span>
+                            <h3 class="text-lg font-black text-slate-800 tracking-tight">${fecha}</h3>
+                        </div>
+                    `;
+
+                    // Acordeones de los Tipos de Concreto para esa Fecha
+                    for (const [tipo, vals] of Object.entries(agrupadoPorFecha[fecha])) {
+                        const groupId = `hist_grupo_${groupCounter}`;
+                        let filasHTML = "";
+                        
+                        vals.registros.forEach(reg => {
+                            filasHTML += `
+                                <tr class="hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
+                                    <td class="px-4 py-3">
+                                        <p class="font-bold text-slate-800">${reg.Elementos} <span class="font-normal text-slate-500 text-xs">(${reg.Tipo_Elemento})</span></p>
+                                        <p class="text-[10px] text-slate-400 font-mono mt-0.5">${reg.ID_Concreto}</p>
+                                    </td>
+                                    <td class="px-4 py-3 text-right font-bold text-corpBlue-600">${reg.Parcial_G} m³</td>
+                                    <td class="px-4 py-3 text-right font-bold text-indigo-600">${reg.Parcial_C} m³</td>
+                                    <td class="px-4 py-3 text-center">
+                                        <button type="button" onclick="abrirModalEdicionHistorica(${reg.stateIndex})" class="text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition" title="Modificar este registro">
+                                            <span class="material-symbols-outlined text-[18px]">edit_square</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+
+                        htmlContent += `
+                            <div class="mb-1.5 border border-slate-200 rounded-xl bg-white overflow-hidden shadow-sm">
+                                <div class="bg-slate-50 hover:bg-corpBlue-50 p-4 cursor-pointer transition flex justify-between items-center border-b border-transparent" onclick="toggleAcordeonMetrado('${groupId}')">
+                                    <div>
+                                        <p class="text-sm font-bold text-corpBlue-800 uppercase mb-1">${tipo}</p>
+                                        <p class="text-[11px] text-slate-500 font-medium">${vals.registros.length} registro(s)</p>
+                                    </div>
+                                    <div class="flex items-center gap-6">
+                                        <div class="text-right border-r border-slate-200 pr-6 hidden sm:block">
+                                            <p class="text-[10px] text-slate-500 uppercase">Total Geom.</p>
+                                            <p class="text-base font-black text-corpBlue-700">${vals.geom.toFixed(2)} m³</p>
+                                        </div>
+                                        <div class="text-right hidden sm:block">
+                                            <p class="text-[10px] text-slate-500 uppercase">Total Campo</p>
+                                            <p class="text-base font-black text-indigo-700">${vals.camp.toFixed(2)} m³</p>
+                                        </div>
+                                        <!-- Vista Mobile Compacta -->
+                                        <div class="text-right sm:hidden">
+                                            <p class="text-sm font-black text-corpBlue-700">${vals.geom.toFixed(2)} m³</p>
+                                        </div>
+                                        <span id="icon_${groupId}" class="material-symbols-outlined text-slate-400 transition-transform duration-300">expand_more</span>
+                                    </div>
+                                </div>
+                                <div id="${groupId}" class="hidden border-t border-slate-200 bg-white overflow-x-auto">
+                                    <table class="w-full text-sm text-left text-slate-600">
+                                        <thead class="text-[11px] text-slate-500 bg-white uppercase border-b border-slate-100">
+                                            <tr>
+                                                <th class="px-4 py-3">Elemento / ID</th>
+                                                <th class="px-4 py-3 text-right">M. Geométrico</th>
+                                                <th class="px-4 py-3 text-right">M. Campo</th>
+                                                <th class="px-4 py-3 text-center w-16">Acción</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">${filasHTML}</tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        `;
+                        groupCounter++;
+                    }
+                });
+                
+                container.innerHTML = htmlContent;
+
+            } catch (error) {
+                loading.classList.add('hidden');
+                container.innerHTML = '<div class="text-sm text-red-500 bg-red-50 p-4 rounded-xl text-center border border-red-200">Error de conexión al buscar rango.</div>';
+            }
+        }
+
+        // ==========================================
+        // MODAL EDICIÓN HISTÓRICA
+        // ==========================================
+
+        function abrirModalEdicionHistorica(index) {
+            const item = MetradosState.historico[index];
+            const fields = ['ID_Concreto', 'Tipo_Concreto', 'Tipo_Elemento', 'Etapa', 'Nivel', 'Semana', 'Elementos', 'L_G', 'B_G', 'A_G', 'H_G', 'Parcial_GMan', 'L_C', 'B_C', 'A_C', 'H_C', 'Parcial_CMan'];
+            
+            fields.forEach(f => {
+                const el = document.getElementById('modal_' + f);
+                if(el) el.value = item[f] || "";
+            });
+            
+            document.getElementById('modal_Fecha_Semana').value = formatDateForInputDate(item.Fecha_Semana);
+            
+            runCalculations('modal_', 'G'); runCalculations('modal_', 'C');
+            document.getElementById('modal-edicion-historica').classList.remove('hidden');
+        }
+
+        function cerrarModalHistorico() {
+            document.getElementById('formEditHistorico').reset();
+            document.getElementById('modal-edicion-historica').classList.add('hidden');
+        }
+
+        document.getElementById('formEditHistorico').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitModal');
+            const textOrg = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = 'Guardando...';
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+            
+            const itemOriginal = MetradosState.historico.find(i => i.ID_Concreto === data.ID_Concreto);
+            const payloadData = { ...itemOriginal, ...data };
+            
+            payloadData.Parcial_G = document.getElementById('modal_Parcial_G').value;
+            payloadData.Parcial_C = document.getElementById('modal_Parcial_C').value;
+            payloadData.Fecha_Semana = formatInputDateToSpanish(data.Fecha_Semana);
+
+            fetch(GOOGLE_APP_URL, { method: 'POST', body: JSON.stringify({ module: 'metrado', action: 'update', data: payloadData }) })
+            .then(res => res.json())
+            .then(response => {
+                if(response.status === "success") {
+                    alert("✅ Registro Histórico actualizado.");
+                    cerrarModalHistorico();
+                    buscarMetradosPorRango(); 
+                    
+                    if (data.Fecha_Semana === document.getElementById('Global_Fecha_Metrado').value) {
+                        cargarResumenDiarioMetrados();
+                    }
+                } else alert("Error: " + response.message);
+            })
+            .catch(() => alert("Ocurrió un error."))
+            .finally(() => { btn.disabled = false; btn.innerHTML = textOrg; });
+        });
+
+        // ==========================================
+        // EXPORTACIÓN A EXCEL CON MEMBRETE Y ESTILOS
+        // ==========================================
+        function exportarExcelMetrados() {
+            const data = MetradosState.historico;
+            
+            if (!data || data.length === 0) {
+                alert("No hay registros históricos cargados. Realice una búsqueda por rango primero.");
+                return;
+            }
+
+            const fInicio = document.getElementById('searchDateStart').value || '-';
+            const fFin = document.getElementById('searchDateEnd').value || '-';
+            const projectName = document.getElementById('sidebar-project-name')?.innerText || 'Proyecto General';
+
+            let htmlTable = `
+                <html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+                <head>
+                    <meta charset="UTF-8">
+                    <style>
+                        table { border-collapse: collapse; font-family: Arial, sans-serif; }
+                        td, th { border: 1px solid #cbd5e1; padding: 5px; font-size: 12px; }
+                        .title { font-size: 16px; font-weight: bold; }
+                        .subtitle { font-size: 12px; font-weight: bold; color: #475569; }
+                    </style>
+                </head>
+                <body>
+                    <table>
+                        <tr>
+                            <td colspan="4" class="title">PROYECTO:</td>
+                            <td colspan="17" class="title">${projectName}</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="subtitle">REPORTE:</td>
+                            <td colspan="17" class="subtitle">Control y Sustento de Metrados de Concreto</td>
+                        </tr>
+                        <tr>
+                            <td colspan="4" class="subtitle">PERIODO:</td>
+                            <td colspan="17" class="subtitle">Del ${formatInputDateToSpanish(fInicio)} al ${formatInputDateToSpanish(fFin)}</td>
+                        </tr>
+                        <tr><td colspan="21"></td></tr>
+
+                        <tr>
+                            <th colspan="9" style="background-color: #334155; color: #ffffff; text-align: center; font-weight: bold;">DATOS GENERALES DE UBICACIÓN</th>
+                            <th colspan="6" style="background-color: #2563eb; color: #ffffff; text-align: center; font-weight: bold;">METRADO GEOMÉTRICO (TEÓRICO)</th>
+                            <th colspan="6" style="background-color: #4f46e5; color: #ffffff; text-align: center; font-weight: bold;">METRADO DE CAMPO (REAL)</th>
+                        </tr>
+
+                        <tr style="background-color: #f1f5f9; font-weight: bold; text-align: center;">
+                            <th>ID_Concreto</th>
+                            <th>Concreto</th>
+                            <th>Semana</th>
+                            <th>Fecha</th>
+                            <th>Elementos</th>
+                            <th>Elemento</th>
+                            <th>Etapa</th>
+                            <th>Nivel</th>
+                            <th>Eje</th>
+                            <th>Largo</th>
+                            <th>Base</th>
+                            <th>Área (Manual)</th>
+                            <th>Altura</th>
+                            <th>Volumen (Manual)</th>
+                            <th style="background-color: #bfdbfe;">Volumen Parcial Geométrico</th>
+                            <th>Largo</th>
+                            <th>Base</th>
+                            <th>Área (Manual)</th>
+                            <th>Altura</th>
+                            <th>Volumen (Manual)</th>
+                            <th style="background-color: #c7d2fe;">Volumen Parcial Campo</th>
+                        </tr>
+            `;
+
+            data.forEach(item => {
+                const v = (val) => val || '';
+                const num = (val) => parseFloat(val) ? parseFloat(val).toFixed(2) : '';
+
+                htmlTable += `
+                    <tr>
+                        <td>${v(item.ID_Concreto)}</td>
+                        <td>${v(item.Tipo_Concreto)}</td>
+                        <td style="text-align: center;">${v(item.Semana)}</td>
+                        <td style="text-align: center;">${v(item.Fecha_Semana)}</td>
+                        <td>${v(item.Elementos)}</td>
+                        <td>${v(item.Tipo_Elemento)}</td>
+                        <td>${v(item.Etapa)}</td>
+                        <td>${v(item.Nivel)}</td>
+                        <td>${v(item.Eje)}</td>
+                        
+                        <td style="text-align: right;">${num(item.L_G)}</td>
+                        <td style="text-align: right;">${num(item.B_G)}</td>
+                        <td style="text-align: right;">${num(item.A_G)}</td>
+                        <td style="text-align: right;">${num(item.H_G)}</td>
+                        <td style="text-align: right;">${num(item.Parcial_GMan)}</td>
+                        <td style="text-align: right; font-weight: bold; background-color: #eff6ff;">${num(item.Parcial_G)}</td>
+
+                        <td style="text-align: right;">${num(item.L_C)}</td>
+                        <td style="text-align: right;">${num(item.B_C)}</td>
+                        <td style="text-align: right;">${num(item.A_C)}</td>
+                        <td style="text-align: right;">${num(item.H_C)}</td>
+                        <td style="text-align: right;">${num(item.Parcial_CMan)}</td>
+                        <td style="text-align: right; font-weight: bold; background-color: #e0e7ff;">${num(item.Parcial_C)}</td>
+                    </tr>
+                `;
+            });
+
+            htmlTable += `
+                    </table>
+                </body>
+                </html>
+            `;
+
+            const blob = new Blob(["\ufeff", htmlTable], { type: 'application/vnd.ms-excel' });
+            const url = URL.createObjectURL(blob);
+            const fileName = `Metrados_${fInicio}_al_${fFin}.xls`;
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
 
         // ==========================================
         // LÓGICA MIXERS 
@@ -918,7 +1507,7 @@
         function resetFormMixer() {
             document.getElementById('ingresoConcretoForm').reset();
             document.getElementById('form-mode-ingreso').value = 'insert';
-            document.getElementById('form-title-mixer').innerText = 'Registro de Ingreso de Concreto';
+            document.getElementById('form-title-mixer').innerText = 'Registro de Ingreso de Mixers';
             document.getElementById('form-icon-mixer').innerText = 'add_circle';
             
             const btn = document.getElementById('btnSubmitMixer');
@@ -1101,6 +1690,9 @@
             toggleEnsayoFields();
             switchMixerTab('tab-registro-mixer');
         }
+
+
+        
 
         // ==========================================
         // LÓGICA DE PROBETAS 
