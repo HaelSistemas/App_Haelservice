@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal de Control de Obra - Index Corp</title>
+    
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              corpBlue: {
+                50: '#ebf0f5',
+                100: '#d1dee8',
+                300: '#7aa3c2',
+                500: '#336a94',
+                600: '#233D5C',
+                700: '#1c314a',
+                800: '#142538',
+              },
+              corpGreen: {
+                DEFAULT: '#85B648',
+                hover: '#719e3a'
+              }
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- Google Material Symbols -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+
+    <style>
+        /* Pequeño ajuste para los acordeones del menú lateral */
+        details > summary { list-style: none; }
+        details > summary::-webkit-details-marker { display: none; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 font-sans overflow-x-hidden min-h-screen flex flex-col">
+
+    <!-- PANTALLA DE CARGA GLOBAL -->
+    <div id="pantalla-carga" class="fixed inset-0 bg-slate-100 z-[100] flex flex-col items-center justify-center transition-opacity duration-300">
+        <!-- Se cambió h-12 por w-24 h-24 (96x96 px) -->
+        <img src="./Logo_App.png" alt="Logo" class="w-24 h-24 object-contain mb-6 animate-pulse rounded-lg">
+        <span class="material-symbols-outlined text-3xl text-corpBlue-500 animate-spin">refresh</span>
+        <p class="text-xs text-slate-400 mt-3 font-medium uppercase tracking-wider">Verificando sesión...</p>
+    </div>
+
+    <!-- BLOQUE 1: LOGIN (Oculto por defecto) -->
+    <div id="bloque-login" class="hidden items-center justify-center flex-grow p-4">
+        <div class="bg-white p-8 rounded-xl shadow-md w-full max-w-sm text-center">
+            <!-- Se cambió h-16 w-auto por w-32 h-32 (128x128 px) -->
+            <img src="./Logo_App.png" alt="Logo Empresa" class="w-32 h-32 mx-auto mb-4 object-contain rounded-lg shadow-sm">
+            <h2 class="text-2xl font-bold text-slate-800 mb-1">Iniciar Sesión</h2>
+            <p class="text-xs text-slate-500 mb-6">Portal de Control y Gestión</p>
+            
+            <div class="mb-4 text-left">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Usuario o Correo</label>
+                <input type="text" id="user-input" placeholder="csuarez" class="w-full p-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 focus:border-corpBlue-500 outline-none transition">
+            </div>
+            <div class="mb-4 text-left">
+                <label class="block text-sm font-medium text-slate-700 mb-1">Contraseña</label>
+                <input type="password" id="pass-input" placeholder="********" class="w-full p-2.5 border border-slate-300 rounded-lg bg-slate-50 focus:ring-2 focus:ring-corpBlue-500 focus:border-corpBlue-500 outline-none transition">
+            </div>
+            
+            <div class="flex items-center mb-6 text-sm text-slate-600">
+                <input type="checkbox" id="recordar" class="mr-2 w-4 h-4 text-corpBlue-500 rounded border-slate-300 focus:ring-corpBlue-500">
+                <label for="recordar">Recordar sesión</label>
+            </div>
+
+            <button id="btn-login" class="w-full bg-corpGreen hover:bg-corpGreen-hover text-white font-bold py-2.5 px-4 rounded-lg flex justify-center items-center gap-2 transition shadow-sm">
+                Ingresar <span class="material-symbols-outlined text-lg">login</span>
+            </button>
+            <p class="text-[11px] text-slate-400 mt-6">© 2026 Index Corp</p>
+        </div>
+    </div>
+
+    <!-- NAVBAR GLOBAL -->
+    <nav id="navbar-global" class="hidden bg-corpBlue-600 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-40 shadow-md">
+        <div class="flex items-center gap-4">
+            <button onclick="window.toggleSidebar()" class="hover:bg-corpBlue-500 p-1 rounded transition flex items-center justify-center">
+                <span class="material-symbols-outlined text-2xl">menu</span>
+            </button>
+            <span id="nav-title" class="text-lg font-bold">Mis Proyectos</span>
+        </div>
+        <div class="relative">
+            <button onclick="window.toggleUserMenu()" id="nav-user-initials" class="w-9 h-9 bg-corpBlue-50 text-corpBlue-600 rounded-full font-bold flex items-center justify-center hover:bg-white transition shadow-sm">
+                --
+            </button>
+            <!-- Dropdown Menú Usuario -->
+            <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-slate-100 overflow-hidden z-50">
+                <div class="px-4 py-3 border-b border-slate-100">
+                    <p id="dropdown-user-name" class="text-sm font-bold text-slate-800">Usuario</p>
+                    <p id="dropdown-user-rol" class="text-xs text-slate-500 truncate">Rol</p>
+                </div>
+                <a href="perfil.html" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition">
+                    <span class="material-symbols-outlined text-[20px]">person</span> Mi Perfil
+                </a>
+                <a href="https://wa.me/51922442738" target="_blank" class="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition">
+                    <span class="material-symbols-outlined text-[20px]">help</span> Soporte
+                </a>
+                <div class="border-t border-slate-100"></div>
+                <button id="btn-logout" onclick="window.cerrarSesionGlobal()" class="w-full text-left flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition font-medium">
+                    <span class="material-symbols-outlined text-[20px]">logout</span> Cerrar Sesión
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- SIDEBAR DINÁMICO (Menú Lateral Centralizado) -->
+    <div id="sidebar-overlay" class="hidden fixed inset-0 bg-slate-900/50 z-40 transition-opacity" onclick="window.toggleSidebar()"></div>
+    <aside id="sidebar" class="fixed top-0 left-0 h-full w-72 bg-white shadow-2xl z-50 transform -translate-x-full transition-transform duration-300 flex flex-col">
+        <!-- El contenido se inyectará desde sidebar.js -->
+    </aside>
+
+    <!-- BLOQUE 2: MIS PROYECTOS -->
+    <main id="bloque-proyectos" class="hidden flex-grow p-4 md:p-6 max-w-7xl mx-auto w-full">
+        <div class="flex items-center gap-3 mb-6">
+            <span class="material-symbols-outlined text-3xl text-corpBlue-600">business_center</span>
+            <h1 class="text-2xl font-bold text-slate-800">Mis Proyectos</h1>
+        </div>
+
+        <!-- CONTENEDOR DINÁMICO DE PROYECTOS -->
+        <div id="contenedor-proyectos" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <!-- Las tarjetas se inyectarán aquí mediante JS -->
+        </div>
+    </main>
+
+    <!-- BLOQUE 3: PANEL DE APPS POR PROYECTO -->
+    <main id="bloque-apps" class="hidden flex-grow p-4 md:p-6 max-w-7xl mx-auto w-full">
+        <div class="flex items-center gap-4 mb-8">
+            <button onclick="window.volverAProyectos()" class="w-10 h-10 bg-white border border-slate-200 text-slate-600 hover:text-corpBlue-600 hover:border-teal-300 rounded-full flex items-center justify-center transition shadow-sm">
+                <span class="material-symbols-outlined">arrow_back</span>
+            </button>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800 leading-tight">Panel de Aplicaciones</h1>
+                <p class="text-sm text-slate-500 mt-1">Proyecto: <strong id="nombre-proyecto-apps" class="text-corpBlue-600"></strong></p>
+            </div>
+        </div>
+        
+        <!-- CONTENEDOR DINÁMICO DE APPS -->
+        <div id="contenedor-apps" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            <!-- Los microservicios se inyectarán aquí mediante JS -->
+        </div>
+    </main>
+
+    <!-- IMPORTACIÓN DE SCRIPTS MODULARES -->
+    <script type="module" src="sidebar.js"></script>
+    <script type="module" src="index.js"></script>
+</body>
+</html>
