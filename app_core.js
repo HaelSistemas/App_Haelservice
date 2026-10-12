@@ -5,13 +5,14 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
 const firebaseConfig = {
-    apiKey: "AIzaSyCiTCag6lwIZcwjnAHPDf0ANaBX0B7DYlY",
-    authDomain: "indexscorp.firebaseapp.com",
-    projectId: "indexscorp",
-    storageBucket: "indexscorp.firebasestorage.app",
-    messagingSenderId: "925382774481",
-    appId: "1:925382774481:web:19a3bcbc23bfc89fecbff0"
+    apiKey: "AIzaSyBLSjyxKHRkq_2d8ymDdxD8AKdDW0ytG2c",
+    authDomain: "haelservice-app.firebaseapp.com",
+    projectId: "haelservice-app",
+    storageBucket: "haelservice-app.firebasestorage.app",
+    messagingSenderId: "817247718343",
+    appId: "1:817247718343:web:cefe67d1eb31a92e5ae7e2"
 };
 
 const app = initializeApp(firebaseConfig);
