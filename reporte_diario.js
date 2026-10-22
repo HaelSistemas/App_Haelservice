@@ -705,7 +705,7 @@ window.submitAnotaciones = async function() {
     const btn = document.getElementById('btnAnotaciones');
     const origText = btn.innerHTML;
     btn.disabled = true;
-    btn.innerHTML = "Guardando en Google Drive";
+    btn.innerHTML = "Guardando ...";
 
     try {
         const docId = fechaInput + "_" + PROJECT_ID;
