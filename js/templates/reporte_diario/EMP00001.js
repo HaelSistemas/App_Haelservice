@@ -8,8 +8,8 @@ export function generarDocDefinition(datos) {
     // CONFIGURACIÓN DE TEMA (Modificar por empresa)
     // ==========================================
     const TEMA = {
-        colorPrimario: '#000000',    // Azul corporativo (Fondos de encabezado y barras laterales)
-        colorSecundario: '#FBC501',  // Verde corporativo (Texto 'PROYECTO')
+        colorPrimario: '#233D5C',    // Azul corporativo (Fondos de encabezado y barras laterales)
+        colorSecundario: '#85B648',  // Verde corporativo (Texto 'PROYECTO')
         colorAcento: '#DC2626',      // Rojo (Para el N° de correlativo)
         fondoTituloLista: '#E2E8F0', // Gris claro (Fondo de barras de títulos de secciones)
         lineaBordes: '#1E293B',      // Azul oscuro casi negro (Bordes de tablas)
